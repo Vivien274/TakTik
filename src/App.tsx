@@ -34,7 +34,28 @@ export function App() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Références mutables pour éviter les fermetures lexicales périmées (stale closures)
   const clientRef = useRef<RealtimeSyncClient | null>(null);
+  const selectedLobbyModeRef = useRef<GameMode | null>(null);
+  const gameStateRef = useRef<GameState>(gameState);
+  const localPlayerRoleRef = useRef<PlayerRole | null>(null);
+  const roomCodeRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
+
+  useEffect(() => {
+    selectedLobbyModeRef.current = selectedLobbyMode;
+  }, [selectedLobbyMode]);
+
+  useEffect(() => {
+    localPlayerRoleRef.current = localPlayerRole;
+  }, [localPlayerRole]);
+
+  useEffect(() => {
+    roomCodeRef.current = roomCode;
+  }, [roomCode]);
 
   // Initialisation du client réseau
   useEffect(() => {
@@ -64,33 +85,41 @@ export function App() {
 
   // Traiter les messages reçus de l'adversaire
   const handleRemoteMessage = (msg: SyncMessage) => {
+    console.log('[handleRemoteMessage] Type reçu:', msg.type, msg);
+
     switch (msg.type) {
       case 'JOIN_REQUEST': {
         // Hôte reçoit la demande du joueur 2 : envoyer l'état initial
-        if (clientRef.current?.getRole() === 1 && selectedLobbyMode) {
-          const freshGame = startNewGame(selectedLobbyMode);
-          setGameState(freshGame);
-          clientRef.current.sendMessage({
-            type: 'INIT_GAME',
-            senderRole: 1,
-            roomCode: clientRef.current.getRoomCode(),
-            timestamp: Date.now(),
-            payload: {
-              mode: selectedLobbyMode,
-              initialState: freshGame,
-            },
-          });
-        }
+        const modeToStart = selectedLobbyModeRef.current || gameStateRef.current.mode || 'PURE_DUEL';
+        console.log('[Host] Traitement JOIN_REQUEST avec mode:', modeToStart);
+        const freshGame = startNewGame(modeToStart);
+        setGameState(freshGame);
+        gameStateRef.current = freshGame;
+
+        clientRef.current?.sendMessage({
+          type: 'INIT_GAME',
+          senderRole: 1,
+          roomCode: clientRef.current.getRoomCode(),
+          timestamp: Date.now(),
+          payload: {
+            mode: modeToStart,
+            initialState: freshGame,
+          },
+        });
         break;
       }
 
       case 'INIT_GAME': {
         // Invité reçoit la partie initialisée par l'hôte
+        console.log('[Guest] Traitement INIT_GAME:', msg.payload);
         if (msg.payload?.initialState) {
           setGameState(msg.payload.initialState);
+          gameStateRef.current = msg.payload.initialState;
           setIsLocalGame(false);
           setLocalPlayerRole(2);
+          localPlayerRoleRef.current = 2;
           setRoomCode(msg.roomCode);
+          roomCodeRef.current = msg.roomCode;
           setWaitingRoomCode(null);
           setIsConnecting(false);
         }
@@ -122,7 +151,6 @@ export function App() {
               ...prev,
               cardSwaps: mergedSwaps,
             };
-            // Si les 4 sièges ont sélectionné leur carte, valider l'échange
             if (
               mergedSwaps.NORTH &&
               mergedSwaps.SOUTH &&
@@ -153,16 +181,20 @@ export function App() {
     setErrorMessage(null);
     setIsConnecting(true);
     setSelectedLobbyMode(mode);
+    selectedLobbyModeRef.current = mode;
 
     const code = clientRef.current.createRoom();
     setWaitingRoomCode(code);
     setRoomCode(code);
+    roomCodeRef.current = code;
     setLocalPlayerRole(1);
+    localPlayerRoleRef.current = 1;
     setIsLocalGame(false);
 
     // Initialiser localement
     const freshGame = startNewGame(mode);
     setGameState(freshGame);
+    gameStateRef.current = freshGame;
   };
 
   // Rejoindre une salle en ligne (Invité / Joueur 2)
@@ -174,9 +206,12 @@ export function App() {
     try {
       await clientRef.current.joinRoom(code);
       setRoomCode(code);
+      roomCodeRef.current = code;
       setLocalPlayerRole(2);
+      localPlayerRoleRef.current = 2;
       setIsLocalGame(false);
     } catch (err: any) {
+      console.error('[handleJoinRoom Error]', err);
       setErrorMessage("Impossible de se connecter à la salle. Vérifiez le code et réessayez.");
       setIsConnecting(false);
     }
@@ -188,7 +223,9 @@ export function App() {
     setLocalPlayerRole(null);
     setRoomCode(null);
     setWaitingRoomCode(null);
-    setGameState(startNewGame(mode));
+    const game = startNewGame(mode);
+    setGameState(game);
+    gameStateRef.current = game;
   };
 
   // Quitter la salle et revenir au menu principal
@@ -200,7 +237,9 @@ export function App() {
     setWaitingRoomCode(null);
     setSelectedLobbyMode(null);
     setErrorMessage(null);
-    setGameState(createInitialState());
+    const initial = createInitialState();
+    setGameState(initial);
+    gameStateRef.current = initial;
   };
 
   // Revanche
@@ -208,6 +247,7 @@ export function App() {
     if (gameState.mode) {
       const restarted = startNewGame(gameState.mode);
       setGameState(restarted);
+      gameStateRef.current = restarted;
 
       if (!isLocalGame && clientRef.current) {
         clientRef.current.sendMessage({

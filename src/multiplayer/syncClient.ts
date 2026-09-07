@@ -59,6 +59,7 @@ export class RealtimeSyncClient {
 
   private setStatus(status: ConnectionStatus, detail?: string) {
     this.status = status;
+    console.log(`[Multiplayer Status] ${status}: ${detail || ''}`);
     if (this.onStatusChangeCallback) {
       this.onStatusChangeCallback(status, detail);
     }
@@ -117,7 +118,7 @@ export class RealtimeSyncClient {
     const channelName = `taktik-room-${this.roomCode}`;
     const channel = this.supabase.channel(channelName, {
       config: {
-        broadcast: { ack: false, self: false },
+        broadcast: { ack: true, self: false },
         presence: { key: `player-${this.role}-${Date.now()}` },
       },
     });
@@ -125,6 +126,7 @@ export class RealtimeSyncClient {
     this.channel = channel;
 
     channel.on('broadcast', { event: 'game-event' }, ({ payload }) => {
+      console.log('[Supabase Broadcast] Reçu :', payload);
       const msg = payload as SyncMessage;
       if (this.onMessageCallback) {
         this.onMessageCallback(msg);
@@ -134,8 +136,20 @@ export class RealtimeSyncClient {
     channel.on('presence', { event: 'sync' }, () => {
       const presenceState = channel.presenceState();
       const keys = Object.keys(presenceState);
+      console.log(`[Supabase Presence] Joueurs connectés: ${keys.length}`, presenceState);
+
       if (keys.length >= 2) {
         this.setStatus('CONNECTED', 'Joueur adverse connecté via Supabase !');
+        // Si je suis l'hôte, déclencher l'envoi de l'état initial
+        if (this.role === 1 && this.onMessageCallback) {
+          console.log("[Host Presence] 2 joueurs détectés, émission automatique du JOIN_REQUEST interne");
+          this.onMessageCallback({
+            type: 'JOIN_REQUEST',
+            senderRole: 2,
+            roomCode: this.roomCode,
+            timestamp: Date.now(),
+          });
+        }
       } else if (this.role === 1) {
         this.setStatus('WAITING_FOR_OPPONENT', `En attente du joueur 2 (Code: ${this.roomCode})`);
       }
@@ -148,23 +162,32 @@ export class RealtimeSyncClient {
       }
     });
 
-    await channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        channel.track({ role: this.role, onlineAt: Date.now() });
-        if (this.role === 1) {
-          this.setStatus('WAITING_FOR_OPPONENT', `En attente du joueur 2 (Code: ${this.roomCode})`);
-        } else {
-          this.setStatus('CONNECTED', 'Connecté à la salle !');
-          this.sendMessage({
-            type: 'JOIN_REQUEST',
-            senderRole: 2,
-            roomCode: this.roomCode,
-            timestamp: Date.now(),
-          });
+    return new Promise<void>((resolve, reject) => {
+      channel.subscribe((status, err) => {
+        console.log(`[Supabase Subscribe] Status: ${status}`, err || '');
+        if (status === 'SUBSCRIBED') {
+          channel.track({ role: this.role, onlineAt: Date.now() });
+          if (this.role === 1) {
+            this.setStatus('WAITING_FOR_OPPONENT', `En attente du joueur 2 (Code: ${this.roomCode})`);
+            resolve();
+          } else {
+            this.setStatus('CONNECTED', 'Connecté à la salle !');
+            // Laisser un court délai pour que la connexion WebSocket soit prête
+            setTimeout(() => {
+              this.sendMessage({
+                type: 'JOIN_REQUEST',
+                senderRole: 2,
+                roomCode: this.roomCode,
+                timestamp: Date.now(),
+              });
+              resolve();
+            }, 300);
+          }
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          this.setStatus('ERROR', `Erreur de connexion au canal Supabase (${status})`);
+          reject(new Error(`Supabase channel error: ${status}`));
         }
-      } else if (status === 'CHANNEL_ERROR') {
-        this.setStatus('ERROR', 'Erreur de connexion au canal Supabase.');
-      }
+      });
     });
   }
 
@@ -246,10 +269,15 @@ export class RealtimeSyncClient {
   // Envoyer un message synchronisé
   public sendMessage(message: SyncMessage) {
     if (this.isUsingSupabase && this.channel) {
+      console.log('[Supabase Send]', message.type, message);
       this.channel.send({
         type: 'broadcast',
         event: 'game-event',
         payload: message,
+      }).then(res => {
+        console.log('[Supabase Send Response]', res);
+      }).catch(err => {
+        console.error('[Supabase Send Error]', err);
       });
     } else if (this.connection && this.connection.open) {
       this.connection.send(message);
