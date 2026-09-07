@@ -302,12 +302,13 @@ export const HandView: React.FC<HandViewProps> = ({
         })}
       </div>
 
-      {/* Selected Card Move Options / Quick Guidance */}
-      {isMyTurn && selectedCard && validMovesForSelectedCard.length > 0 && (
-        <div className="mt-2 text-center text-xs text-cyan-300 flex items-center justify-center gap-2 bg-cyan-950/60 px-4 py-2 rounded-full border border-cyan-800/60 backdrop-blur-md flex-wrap">
-          <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-          {selectedTokenId &&
-          validMovesForSelectedCard.filter(m => m.tokenId === selectedTokenId).length > 1 ? (
+      {/* Selected Card Move Choices (Uniquement si un pion sélectionné dispose de plusieurs actions au choix) */}
+      {isMyTurn &&
+        selectedCard &&
+        selectedTokenId &&
+        validMovesForSelectedCard.filter(m => m.tokenId === selectedTokenId).length > 1 && (
+          <div className="mt-2 text-center text-xs text-cyan-300 flex items-center justify-center gap-2 bg-cyan-950/60 px-4 py-2 rounded-full border border-cyan-800/60 backdrop-blur-md flex-wrap">
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-bold text-white">Choisir l'action pour ce pion :</span>
               {validMovesForSelectedCard
@@ -327,17 +328,8 @@ export const HandView: React.FC<HandViewProps> = ({
                   </button>
                 ))}
             </div>
-          ) : Array.from(new Set(validMovesForSelectedCard.map(m => m.tokenId))).length === 1 ? (
-            <span>
-              Carte <strong>{selectedCard.rank}{selectedCard.symbol}</strong> : <strong>Touchez à nouveau la carte relevée</strong> ou le pion pour jouer !
-            </span>
-          ) : (
-            <span>
-              Carte <strong>{selectedCard.rank}{selectedCard.symbol}</strong> : Touchez le pion que vous souhaitez déplacer.
-            </span>
-          )}
-        </div>
-      )}
+          </div>
+        )}
     </div>
   );
 };
