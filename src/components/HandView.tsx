@@ -2,7 +2,7 @@ import React from 'react';
 import type { Card, GameMode, MoveOption, Seat, SeatConfig, Token } from '../game/types';
 import type { PlayerRole } from '../multiplayer/types';
 import { getLegalMovesForCard, hasAnyLegalMove } from '../game/rules';
-import { Sparkles, Trash2, ArrowRightLeft, Split, AlertCircle, Lock, Clock } from 'lucide-react';
+import { Sparkles, Trash2, ArrowRightLeft, Split, AlertCircle, Lock } from 'lucide-react';
 
 interface HandViewProps {
   cards: Card[];
@@ -18,9 +18,31 @@ interface HandViewProps {
   validMovesForSelectedCard: MoveOption[];
   localPlayerRole: PlayerRole | null;
   isLocalGame: boolean;
+  turnTimeLeft?: number;
   onSelectCard: (cardId: string) => void;
   onDiscardCard: (cardId: string) => void;
   onExecuteMove?: (move: MoveOption) => void;
+}
+
+function getShortCardLabel(card: Card): string {
+  switch (card.rank) {
+    case 'A':
+      return 'Sortie • +11';
+    case '4':
+      return 'Recul -4';
+    case '5':
+      return 'Pousse +5';
+    case '7':
+      return 'Partage 7';
+    case 'J':
+      return 'Échange';
+    case 'Q':
+      return 'Avance 12';
+    case 'K':
+      return 'Sortie • +13';
+    default:
+      return `Avance +${card.value}`;
+  }
 }
 
 export const HandView: React.FC<HandViewProps> = ({
@@ -37,6 +59,7 @@ export const HandView: React.FC<HandViewProps> = ({
   validMovesForSelectedCard,
   localPlayerRole,
   isLocalGame,
+  turnTimeLeft = 30,
   onSelectCard,
   onDiscardCard,
   onExecuteMove,
@@ -48,6 +71,15 @@ export const HandView: React.FC<HandViewProps> = ({
     (localPlayerRole !== null &&
       currentSeatConfig?.humanPlayer === localPlayerRole &&
       (!displayedSeat || displayedSeat === activeSeat));
+
+  const timerColor =
+    turnTimeLeft <= 5
+      ? '#ef4444'
+      : turnTimeLeft <= 10
+      ? '#f59e0b'
+      : isMyTurn
+      ? '#10b981'
+      : currentSeatConfig?.hex || '#38bdf8';
 
   const anyMovePossible = React.useMemo(
     () => hasAnyLegalMove(cards, activeSeat, mode, tokens),
@@ -66,15 +98,54 @@ export const HandView: React.FC<HandViewProps> = ({
             : 'border-amber-500/50 bg-gradient-to-r from-slate-950/95 via-slate-900/90 to-slate-950/95 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
         }`}
       >
-        <div className="flex items-center gap-2.5 sm:gap-3.5 w-full sm:w-auto">
-          {isMyTurn ? (
-            <div className="relative flex h-4 w-4 sm:h-5 sm:w-5 shrink-0 items-center justify-center">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 sm:h-3.5 sm:w-3.5 bg-emerald-400 shadow-[0_0_10px_#34d399]"></span>
+        <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+          {/* WePlay-style Highlight Avatar & Circular Timer Ring */}
+          <div className="relative flex items-center justify-center shrink-0">
+            <svg className="w-12 h-12 sm:w-14 sm:h-14 -rotate-90" viewBox="0 0 56 56">
+              {/* Background Track */}
+              <circle
+                cx="28"
+                cy="28"
+                r="23"
+                fill="none"
+                stroke="#1e293b"
+                strokeWidth="4"
+              />
+              {/* Animated Progress Arc */}
+              <circle
+                cx="28"
+                cy="28"
+                r="23"
+                fill="none"
+                stroke={timerColor}
+                strokeWidth="4"
+                strokeDasharray="144.51"
+                strokeDashoffset={144.51 * (1 - Math.max(0, Math.min(30, turnTimeLeft)) / 30)}
+                strokeLinecap="round"
+                className="transition-all duration-1000 ease-linear"
+              />
+            </svg>
+
+            {/* Glowing Avatar Spotlight */}
+            <div
+              className={`absolute w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 rounded-full flex flex-col items-center justify-center font-black transition-all ${
+                isMyTurn
+                  ? 'shadow-[0_0_20px_rgba(16,185,129,0.8)] ring-2 ring-emerald-300'
+                  : 'shadow-md ring-1 ring-slate-600'
+              }`}
+              style={{
+                backgroundColor: currentSeatConfig?.hex || '#38bdf8',
+                color: '#07090e',
+              }}
+            >
+              <span className="text-[10px] sm:text-[11px] font-black leading-none">
+                J{currentSeatConfig?.humanPlayer || '1'}
+              </span>
+              <span className="text-[8px] sm:text-[9px] font-mono font-black leading-none mt-0.5">
+                {turnTimeLeft}s
+              </span>
             </div>
-          ) : (
-            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 animate-pulse shrink-0" />
-          )}
+          </div>
 
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap">
@@ -179,8 +250,8 @@ export const HandView: React.FC<HandViewProps> = ({
         )}
       </div>
 
-      {/* Cards Row: Always rendered Face-Up with full values */}
-      <div className="w-full flex items-center justify-center gap-1.5 sm:gap-3 md:gap-4 overflow-x-auto py-1 sm:py-2 px-1 sm:px-2">
+      {/* Cards Row: High Touch Target for Smartphone & Mobile */}
+      <div className="w-full flex items-center justify-center gap-2 xs:gap-3 sm:gap-4 md:gap-5 overflow-x-auto pt-4 pb-2 px-2">
         {cards.map((card) => {
           const isSelected = card.id === selectedCardId;
           const moves = isMyTurn ? getLegalMovesForCard(card, activeSeat, mode, tokens, split7Remaining) : [];
@@ -189,14 +260,14 @@ export const HandView: React.FC<HandViewProps> = ({
           return (
             <div
               key={card.id}
-              className={`relative flex-shrink-0 w-16 sm:w-24 md:w-28 h-24 sm:h-34 md:h-40 rounded-xl sm:rounded-2xl transition-all duration-200 select-none flex flex-col justify-between p-2 sm:p-2.5 md:p-3 ${
+              className={`relative flex-shrink-0 w-20 min-w-[80px] xs:w-[88px] sm:w-28 md:w-32 h-32 xs:h-36 sm:h-42 md:h-48 rounded-2xl sm:rounded-3xl transition-all duration-200 select-none flex flex-col justify-between p-2.5 sm:p-3.5 touch-manipulation ${
                 !isMyTurn
-                  ? 'glass-card bg-slate-900/70 opacity-80 border-slate-700/70 cursor-default'
+                  ? 'glass-card bg-slate-900/70 opacity-80 border-2 border-slate-700/60 cursor-default'
                   : isSelected
-                  ? 'ring-2 ring-cyan-400 -translate-y-2 sm:-translate-y-3 shadow-2xl shadow-cyan-500/30 bg-slate-800 cursor-pointer'
+                  ? 'ring-4 ring-cyan-400 -translate-y-3 sm:-translate-y-4 shadow-[0_0_25px_rgba(34,211,238,0.7)] bg-slate-800 scale-105 z-20 cursor-pointer'
                   : hasMoves
-                  ? 'hover:-translate-y-1 sm:hover:-translate-y-2 glass-card hover:border-slate-400 bg-slate-900/80 shadow-md cursor-pointer'
-                  : 'opacity-50 glass-card bg-slate-950/60 hover:opacity-80 cursor-pointer'
+                  ? 'hover:-translate-y-1.5 active:scale-95 glass-card border-2 border-slate-600 hover:border-cyan-400/90 bg-slate-900/90 shadow-xl cursor-pointer'
+                  : 'opacity-50 glass-card bg-slate-950/60 hover:opacity-80 border border-slate-800 cursor-pointer'
               }`}
               onClick={() => {
                 if (!isMyTurn) return;
@@ -205,62 +276,64 @@ export const HandView: React.FC<HandViewProps> = ({
                 }
               }}
             >
-                {/* Header (Rank & Suit) */}
-                <div className="flex items-center justify-between">
-                  <span
-                    className={`text-base sm:text-xl md:text-2xl font-black font-display leading-none ${
-                      card.isRed ? 'text-rose-500' : 'text-slate-100'
-                    }`}
-                  >
-                    {card.rank}
-                  </span>
-                  <span
-                    className={`text-sm sm:text-lg md:text-xl leading-none ${
-                      card.isRed ? 'text-rose-500' : 'text-slate-300'
-                    }`}
-                  >
-                    {card.symbol}
-                  </span>
-                </div>
-
-                {/* Card Center Symbol */}
-                <div className="self-center my-auto">
-                  <span
-                    className={`text-2xl sm:text-3xl md:text-4xl opacity-20 leading-none ${
-                      card.isRed ? 'text-rose-400' : 'text-slate-400'
-                    }`}
-                  >
-                    {card.symbol}
-                  </span>
-                </div>
-
-                {/* Footer description (hidden on small mobile to preserve layout) */}
-                <div className="hidden sm:block text-[9px] md:text-[11px] leading-tight font-medium text-slate-300 line-clamp-2">
-                  {card.description}
-                </div>
-
-                {/* Discard button when no moves possible - centered on the card */}
-                {!hasMoves && !anyMovePossible && isSelected && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDiscardCard(card.id);
-                    }}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl bg-rose-600 hover:bg-rose-500 active:scale-95 text-[10px] sm:text-xs font-bold text-white flex items-center gap-1 shadow-2xl shadow-rose-950/90 border border-rose-400/60 z-30 whitespace-nowrap animate-pulse"
-                  >
-                    <Trash2 className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
-                    <span>Défausser</span>
-                  </button>
-                )}
-
-                {/* Legal Move indicator pip */}
-                {hasMoves && (
-                  <div className="absolute top-1.5 right-1.5 w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400 animate-pulse" />
-                )}
+              {/* Header (Rank & Suit) */}
+              <div className="flex items-center justify-between">
+                <span
+                  className={`text-2xl xs:text-3xl sm:text-4xl font-black font-display leading-none ${
+                    card.isRed ? 'text-rose-500' : 'text-slate-100'
+                  }`}
+                >
+                  {card.rank}
+                </span>
+                <span
+                  className={`text-lg xs:text-xl sm:text-2xl leading-none ${
+                    card.isRed ? 'text-rose-500' : 'text-slate-300'
+                  }`}
+                >
+                  {card.symbol}
+                </span>
               </div>
-            );
-          })}
+
+              {/* Card Center Symbol Watermark */}
+              <div className="self-center my-auto">
+                <span
+                  className={`text-3xl xs:text-4xl sm:text-5xl opacity-20 leading-none select-none ${
+                    card.isRed ? 'text-rose-400' : 'text-slate-400'
+                  }`}
+                >
+                  {card.symbol}
+                </span>
+              </div>
+
+              {/* Action badge on mobile and desktop */}
+              <div className="w-full py-0.5 px-1 rounded-md sm:rounded-lg bg-slate-950/80 border border-slate-700/60 text-center">
+                <span className="text-[10px] xs:text-[11px] sm:text-xs font-black tracking-tight text-cyan-200 block truncate">
+                  {getShortCardLabel(card)}
+                </span>
+              </div>
+
+              {/* Discard button when no moves possible - centered on the card */}
+              {!hasMoves && !anyMovePossible && isSelected && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDiscardCard(card.id);
+                  }}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-rose-600 hover:bg-rose-500 active:scale-90 text-xs sm:text-sm font-black text-white flex items-center gap-1.5 shadow-2xl shadow-rose-950/90 border border-rose-400/60 z-30 whitespace-nowrap animate-pulse"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Défausser</span>
+                </button>
+              )}
+
+              {/* Legal Move indicator pip */}
+              {hasMoves && (
+                <div className="absolute top-2 right-2 w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400 animate-pulse" />
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Selected Card Move Options / Quick Guidance */}

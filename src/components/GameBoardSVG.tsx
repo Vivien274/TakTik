@@ -26,6 +26,7 @@ interface GameBoardSVGProps {
   jackFirstSelectedTokenId?: string | null;
   onSelectJackTarget?: (targetTokenId: string) => void;
   isMyTurn?: boolean;
+  turnTimeLeft?: number;
   onInvalidTokenClick?: (token: Token) => void;
 }
 
@@ -68,6 +69,7 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
   jackFirstSelectedTokenId,
   onSelectJackTarget,
   isMyTurn = true,
+  turnTimeLeft = 30,
   onInvalidTokenClick,
 }) => {
   const geometry: BoardGeometryConfig = React.useMemo(
@@ -404,28 +406,30 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
             fill="#080e1b"
             fillOpacity="0.96"
             stroke={activeSeatColor.stroke}
-            strokeWidth={isMyTurn ? "3.5" : "2.5"}
-            strokeOpacity="0.9"
+            strokeWidth={isMyTurn ? "3" : "2"}
+            strokeOpacity="0.5"
             filter="drop-shadow(0 0 16px rgba(0,0,0,0.8))"
-          >
-            <animate
-              attributeName="stroke-width"
-              values={isMyTurn ? "3;5;3" : "2;3.5;2"}
-              dur="2s"
-              repeatCount="indefinite"
-            />
-            <animate
-              attributeName="stroke-opacity"
-              values="0.6;1;0.6"
-              dur="2s"
-              repeatCount="indefinite"
-            />
-          </circle>
+          />
+
+          {/* WePlay-style Circular Timer Ring around the Hub */}
+          <circle
+            cx={geometry.center.x}
+            cy={geometry.center.y}
+            r="68"
+            fill="none"
+            stroke={turnTimeLeft <= 5 ? '#ef4444' : turnTimeLeft <= 10 ? '#f59e0b' : (isMyTurn ? '#34d399' : activeSeatColor.stroke)}
+            strokeWidth={isMyTurn ? "4.5" : "3.5"}
+            strokeDasharray="427.25"
+            strokeDashoffset={427.25 * (1 - Math.max(0, Math.min(30, turnTimeLeft)) / 30)}
+            strokeLinecap="round"
+            transform={`rotate(-90 ${geometry.center.x} ${geometry.center.y})`}
+            className="transition-all duration-1000 ease-linear"
+          />
 
           {/* Center Hub Text */}
           <text
             x={geometry.center.x}
-            y={geometry.center.y - 23}
+            y={geometry.center.y - 24}
             textAnchor="middle"
             fill="#94a3b8"
             fontSize="9"
@@ -437,7 +441,7 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
           </text>
           <text
             x={geometry.center.x}
-            y={geometry.center.y + 2}
+            y={geometry.center.y + 1}
             textAnchor="middle"
             fill={activeSeatColor.stroke}
             fontSize="17"
@@ -449,7 +453,7 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
           </text>
           <text
             x={geometry.center.x}
-            y={geometry.center.y + 23}
+            y={geometry.center.y + 21}
             textAnchor="middle"
             fill={isMyTurn ? '#34d399' : '#cbd5e1'}
             fontSize="10"
@@ -459,17 +463,32 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
           >
             {isMyTurn ? '★ C’EST À VOUS ! ★' : `JOUEUR ${activeSeatConfig?.humanPlayer}`}
           </text>
-          <text
-            x={geometry.center.x}
-            y={geometry.center.y + 38}
-            textAnchor="middle"
-            fill="#64748b"
-            fontSize="7"
-            letterSpacing="1.5"
-            className="uppercase"
-          >
-            {mode === 'PURE_DUEL' ? 'DUEL • 32 CASES' : 'CLASSIQUE • 64 CASES'}
-          </text>
+
+          {/* Digital Timer Pill in Center */}
+          <g transform={`translate(${geometry.center.x}, ${geometry.center.y + 36})`}>
+            <rect
+              x="-24"
+              y="-8"
+              width="48"
+              height="16"
+              rx="8"
+              fill="#0f172a"
+              fillOpacity="0.9"
+              stroke={turnTimeLeft <= 5 ? '#ef4444' : turnTimeLeft <= 10 ? '#f59e0b' : '#38bdf8'}
+              strokeWidth="1.2"
+            />
+            <text
+              x="0"
+              y="3.5"
+              textAnchor="middle"
+              fill={turnTimeLeft <= 5 ? '#f87171' : turnTimeLeft <= 10 ? '#fbbf24' : '#7dd3fc'}
+              fontSize="9.5"
+              fontWeight="900"
+              className="font-mono"
+            >
+              {turnTimeLeft}s
+            </text>
+          </g>
         </g>
 
         {/* HOME RUNWAYS FOR EACH SEAT */}

@@ -42,6 +42,17 @@ export function App() {
     return () => clearTimeout(timer);
   }, [hintMessage]);
 
+  // Compte à rebours du tour (30s) style WePlay Jaquaroo
+  const [turnTimeLeft, setTurnTimeLeft] = useState(30);
+
+  useEffect(() => {
+    setTurnTimeLeft(30);
+    const interval = setInterval(() => {
+      setTurnTimeLeft(prev => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [gameState.activeSeat, gameState.roundNumber, gameState.phase]);
+
   // Références mutables pour éviter les fermetures lexicales périmées (stale closures)
   const clientRef = useRef<RealtimeSyncClient | null>(null);
   const selectedLobbyModeRef = useRef<GameMode | null>(null);
@@ -515,6 +526,7 @@ export function App() {
         connectionStatus={connectionStatus}
         localPlayerRole={localPlayerRole}
         isLocalGame={isLocalGame}
+        turnTimeLeft={turnTimeLeft}
         onLeaveRoom={handleLeaveRoom}
         onRestartMatch={handleRestartMatch}
         onToggleRules={() => setIsRulesOpen(true)}
@@ -551,6 +563,7 @@ export function App() {
             jackFirstSelectedTokenId={gameState.jackFirstSelectedTokenId}
             onSelectJackTarget={handleSelectJackTarget}
             isMyTurn={isMyTurn}
+            turnTimeLeft={turnTimeLeft}
             onInvalidTokenClick={handleInvalidTokenClick}
           />
         </div>
@@ -571,6 +584,7 @@ export function App() {
             validMovesForSelectedCard={validMovesForSelectedCard}
             localPlayerRole={localPlayerRole}
             isLocalGame={isLocalGame}
+            turnTimeLeft={turnTimeLeft}
             onSelectCard={handleSelectCard}
             onDiscardCard={handleDiscardCard}
             onExecuteMove={handleExecuteMove}
