@@ -116,10 +116,10 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
   };
 
   return (
-    <div className="w-full flex items-center justify-center relative select-none">
+    <div className="w-full flex items-center justify-center relative select-none touch-none">
       <svg
         viewBox={`0 0 ${geometry.viewBoxSize} ${geometry.viewBoxSize}`}
-        className="w-full max-w-[760px] h-auto drop-shadow-2xl overflow-visible"
+        className="w-full max-w-[94vw] sm:max-w-[580px] lg:max-w-[680px] max-h-[44vh] sm:max-h-[55vh] md:max-h-[62vh] aspect-square drop-shadow-2xl overflow-visible touch-none"
       >
         <defs>
           {/* Radial Board Glow */}

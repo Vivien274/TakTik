@@ -56,10 +56,10 @@ export const HandView: React.FC<HandViewProps> = ({
   return (
     <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
       {/* Current Turn & Status Banner */}
-      <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 rounded-2xl glass-panel border border-slate-800/80 mb-3 select-none">
-        <div className="flex items-center gap-3">
+      <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-3 px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl glass-panel border border-slate-800/80 mb-1.5 sm:mb-3 select-none">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div
-            className="w-4 h-4 rounded-full animate-pulse shadow-lg"
+            className="w-3 h-3 sm:w-4 sm:h-4 rounded-full animate-pulse shadow-lg shrink-0"
             style={{
               backgroundColor: currentSeatConfig?.hex || '#38bdf8',
               boxShadow: `0 0 12px ${currentSeatConfig?.glowHex || 'rgba(56, 189, 248, 0.6)'}`,
@@ -135,7 +135,7 @@ export const HandView: React.FC<HandViewProps> = ({
       </div>
 
       {/* Cards Row: Always rendered Face-Up with full values */}
-      <div className="w-full flex items-center justify-center gap-2 sm:gap-4 overflow-x-auto py-2 px-2">
+      <div className="w-full flex items-center justify-center gap-1.5 sm:gap-3 md:gap-4 overflow-x-auto py-1 sm:py-2 px-1 sm:px-2">
         {cards.map((card) => {
           const isSelected = card.id === selectedCardId;
           const moves = isMyTurn ? getLegalMovesForCard(card, activeSeat, mode, tokens, split7Remaining) : [];
@@ -144,13 +144,13 @@ export const HandView: React.FC<HandViewProps> = ({
           return (
             <div
               key={card.id}
-              className={`relative flex-shrink-0 w-20 sm:w-28 h-32 sm:h-40 rounded-xl transition-all duration-200 select-none flex flex-col justify-between p-2.5 sm:p-3 ${
+              className={`relative flex-shrink-0 w-14 sm:w-20 md:w-28 h-20 sm:h-28 md:h-40 rounded-xl transition-all duration-200 select-none flex flex-col justify-between p-1.5 sm:p-2.5 md:p-3 ${
                 !isMyTurn
                   ? 'glass-card bg-slate-900/70 opacity-80 border-slate-700/70 cursor-default'
                   : isSelected
-                  ? 'ring-2 ring-cyan-400 -translate-y-3 shadow-2xl shadow-cyan-500/30 bg-slate-800 cursor-pointer'
+                  ? 'ring-2 ring-cyan-400 -translate-y-2 sm:-translate-y-3 shadow-2xl shadow-cyan-500/30 bg-slate-800 cursor-pointer'
                   : hasMoves
-                  ? 'hover:-translate-y-2 glass-card hover:border-slate-400 bg-slate-900/80 shadow-md cursor-pointer'
+                  ? 'hover:-translate-y-1 sm:hover:-translate-y-2 glass-card hover:border-slate-400 bg-slate-900/80 shadow-md cursor-pointer'
                   : 'opacity-50 glass-card bg-slate-950/60 hover:opacity-80 cursor-pointer'
               }`}
               onClick={() => {
@@ -163,14 +163,14 @@ export const HandView: React.FC<HandViewProps> = ({
                 {/* Header (Rank & Suit) */}
                 <div className="flex items-center justify-between">
                   <span
-                    className={`text-lg sm:text-2xl font-black font-display ${
+                    className={`text-sm sm:text-lg md:text-2xl font-black font-display leading-none ${
                       card.isRed ? 'text-rose-500' : 'text-slate-100'
                     }`}
                   >
                     {card.rank}
                   </span>
                   <span
-                    className={`text-base sm:text-xl ${
+                    className={`text-xs sm:text-base md:text-xl leading-none ${
                       card.isRed ? 'text-rose-500' : 'text-slate-300'
                     }`}
                   >
@@ -181,7 +181,7 @@ export const HandView: React.FC<HandViewProps> = ({
                 {/* Card Center Symbol */}
                 <div className="self-center my-auto">
                   <span
-                    className={`text-2xl sm:text-4xl opacity-20 ${
+                    className={`text-lg sm:text-2xl md:text-4xl opacity-20 leading-none ${
                       card.isRed ? 'text-rose-400' : 'text-slate-400'
                     }`}
                   >
@@ -189,28 +189,29 @@ export const HandView: React.FC<HandViewProps> = ({
                   </span>
                 </div>
 
-                {/* Footer description */}
-                <div className="text-[9px] sm:text-[11px] leading-tight font-medium text-slate-300 line-clamp-2">
+                {/* Footer description (hidden on small mobile to preserve layout) */}
+                <div className="hidden sm:block text-[9px] md:text-[11px] leading-tight font-medium text-slate-300 line-clamp-2">
                   {card.description}
                 </div>
 
-                {/* Discard button when no moves possible */}
+                {/* Discard button when no moves possible - centered on the card */}
                 {!hasMoves && !anyMovePossible && isSelected && (
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       onDiscardCard(card.id);
                     }}
-                    className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full bg-rose-600 hover:bg-rose-500 text-[10px] font-bold text-white flex items-center gap-1 shadow-lg shadow-rose-900/40 z-20"
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl bg-rose-600 hover:bg-rose-500 active:scale-95 text-[10px] sm:text-xs font-bold text-white flex items-center gap-1 shadow-2xl shadow-rose-950/90 border border-rose-400/60 z-30 whitespace-nowrap animate-pulse"
                   >
-                    <Trash2 className="w-3 h-3" />
+                    <Trash2 className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                     <span>Défausser</span>
                   </button>
                 )}
 
                 {/* Legal Move indicator pip */}
                 {hasMoves && (
-                  <div className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400 animate-pulse" />
+                  <div className="absolute top-1.5 right-1.5 w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400 animate-pulse" />
                 )}
               </div>
             );

@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import {
   Copy,
   Check,
-  Radio,
   BookOpen,
   History,
   RotateCcw,
   LogOut,
-  Layers,
   Sparkles,
 } from 'lucide-react';
 import type { GameState } from '../game/types';
@@ -50,119 +48,85 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
   const isMyTurn = isLocalGame || (localPlayerRole && activeSeatConfig?.humanPlayer === localPlayerRole);
 
   return (
-    <header className="w-full flex items-center justify-between px-3 sm:px-5 py-2.5 glass-panel border-b border-slate-800/80 sticky top-0 z-30 select-none">
-      {/* Brand & Room Info */}
-      <div className="flex items-center gap-2 sm:gap-4">
+    <header className="w-full flex items-center justify-between px-2.5 sm:px-4 py-1.5 sm:py-2 glass-panel border-b border-slate-800/80 sticky top-0 z-30 select-none h-12 sm:h-13">
+      {/* Left: Quit button + Logo + Room Code */}
+      <div className="flex items-center gap-1.5 sm:gap-3">
         <button
           onClick={onLeaveRoom}
-          title="Quitter la partie et revenir au salon"
-          className="p-2 rounded-xl bg-slate-800/80 hover:bg-rose-900/40 text-slate-300 hover:text-rose-300 border border-transparent hover:border-rose-700/40 transition-colors flex items-center gap-1.5 text-xs font-semibold"
+          title="Quitter la partie"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800/80 transition-colors"
         >
           <LogOut className="w-4 h-4" />
-          <span className="hidden md:inline">Quitter</span>
         </button>
 
-        <div className="flex items-center gap-2">
-          <span className="font-extrabold font-display text-white tracking-wide text-sm sm:text-base">
-            TAKTIK
-          </span>
-          <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
-            {state.mode === 'PURE_DUEL' ? 'Pure Duel' : 'Classique'}
-          </span>
-        </div>
+        <span className="font-black font-display text-white tracking-wide text-xs sm:text-sm flex items-center gap-1.5">
+          TAKTIK
+          {!isLocalGame && (
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                connectionStatus === 'CONNECTED'
+                  ? 'bg-emerald-400'
+                  : 'bg-amber-400 animate-pulse'
+              }`}
+              title={connectionStatus === 'CONNECTED' ? 'En ligne' : 'Connexion...'}
+            />
+          )}
+        </span>
 
         {/* Room Code Badge (Online only) */}
         {!isLocalGame && roomCode && (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-900/80 border border-slate-700/80 text-xs">
-            <span className="text-[10px] uppercase font-bold text-slate-400 hidden sm:inline">Salle :</span>
-            <strong className="font-mono text-cyan-400 font-black tracking-wider">{roomCode}</strong>
-            <button
-              onClick={handleCopy}
-              title="Copier le code de salle"
-              className="p-1 hover:text-cyan-300 transition-colors text-slate-400"
-            >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            </button>
-          </div>
+          <button
+            onClick={handleCopy}
+            title="Cliquez pour copier le code de la salle"
+            className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-900/90 border border-slate-700/80 hover:border-cyan-500/50 text-[11px] font-mono transition-colors"
+          >
+            <span className="text-slate-400 font-sans text-[10px]">#</span>
+            <strong className="text-cyan-300 font-bold tracking-wider">{roomCode}</strong>
+            {copied ? (
+              <Check className="w-3 h-3 text-emerald-400 shrink-0" />
+            ) : (
+              <Copy className="w-3 h-3 text-slate-500 shrink-0" />
+            )}
+          </button>
         )}
       </div>
 
-      {/* Center Status: Local Identity & Turn Notification */}
-      <div className="flex items-center gap-2 sm:gap-4 text-xs">
-        {!isLocalGame && (
-          <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-xl bg-slate-900/70 border border-slate-800">
-            <span className="text-slate-400">Vous êtes :</span>
-            <strong className={localPlayerRole === 1 ? 'text-cyan-400' : 'text-rose-400'}>
-              Joueur {localPlayerRole} ({localPlayerRole === 1 ? 'Hôte' : 'Invité'})
-            </strong>
-          </div>
-        )}
-
-        {/* Turn Status Pill */}
+      {/* Center: Essential Turn Status */}
+      <div className="flex items-center gap-1.5 text-xs">
         <div
-          className={`flex items-center gap-2 px-3 py-1 rounded-xl border font-semibold ${
+          className={`flex items-center gap-1.5 px-2.5 py-0.5 sm:py-1 rounded-full border text-[11px] sm:text-xs font-bold transition-all ${
             isMyTurn
               ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300 animate-pulse'
-              : 'bg-slate-900/60 border-slate-800 text-slate-400'
+              : 'bg-slate-900/70 border-slate-800 text-slate-400'
           }`}
         >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>{isMyTurn ? 'À vous de jouer !' : "Tour de l'adversaire..."}</span>
-        </div>
-
-        {/* Connection status indicator (Online only) */}
-        {!isLocalGame && (
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-900/70 border border-slate-800 text-[11px]">
-            <Radio
-              className={`w-3.5 h-3.5 ${
-                connectionStatus === 'CONNECTED'
-                  ? 'text-emerald-400 animate-pulse'
-                  : connectionStatus === 'WAITING_FOR_OPPONENT'
-                  ? 'text-amber-400 animate-bounce'
-                  : 'text-rose-400'
-              }`}
-            />
-            <span className="text-slate-300">
-              {connectionStatus === 'CONNECTED'
-                ? 'Adversaire connecté'
-                : connectionStatus === 'WAITING_FOR_OPPONENT'
-                ? 'En attente...'
-                : 'Déconnecté'}
-            </span>
-          </div>
-        )}
-
-        {/* Deck and Round Counters */}
-        <div className="hidden xl:flex items-center gap-2 px-2.5 py-1 rounded-xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400">
-          <Layers className="w-3.5 h-3.5 text-slate-500" />
-          <span>Manche <strong className="text-white font-mono">{state.roundNumber}</strong></span>
-          <span>• Pioche <strong className="text-white font-mono">{state.deck.length}</strong></span>
+          <Sparkles className="w-3 h-3 text-cyan-400 shrink-0" />
+          <span>{isMyTurn ? 'À vous' : activeSeatConfig?.name}</span>
         </div>
       </div>
 
-      {/* Right Controls */}
-      <div className="flex items-center gap-1.5 sm:gap-2">
+      {/* Right Controls: Only Essential Icons */}
+      <div className="flex items-center gap-1">
+        <button
+          onClick={onToggleRules}
+          title="Guide des règles"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-300 hover:bg-slate-800/80 transition-colors"
+        >
+          <BookOpen className="w-4 h-4" />
+        </button>
+
         <button
           onClick={onToggleHistory}
           title="Historique des coups"
-          className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-300 hover:bg-slate-800/80 transition-colors"
         >
           <History className="w-4 h-4" />
         </button>
 
         <button
-          onClick={onToggleRules}
-          title="Guide des règles et des cartes"
-          className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors flex items-center gap-1.5 text-xs font-semibold"
-        >
-          <BookOpen className="w-4 h-4" />
-          <span className="hidden sm:inline">Règles</span>
-        </button>
-
-        <button
           onClick={onRestartMatch}
           title="Recommencer la partie"
-          className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors"
         >
           <RotateCcw className="w-4 h-4" />
         </button>
