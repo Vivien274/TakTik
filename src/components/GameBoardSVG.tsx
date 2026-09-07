@@ -85,18 +85,27 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
     return map;
   }, [validMoves]);
 
-  // Destination nodes that can be clicked for the currently selected token
+  // Destination nodes that can be clicked for the currently selected token or for base exits
   const targetLocations = React.useMemo(() => {
-    if (!selectedTokenId) return [];
-    return validMoves.filter(m => m.tokenId === selectedTokenId);
+    if (selectedTokenId) {
+      return validMoves.filter(m => m.tokenId === selectedTokenId);
+    }
+    // Also show start square targets when a card that can exit base is selected
+    return validMoves.filter(m => m.type === 'EXIT_BASE');
   }, [selectedTokenId, validMoves]);
 
   // Helper to check if a location is a target destination
   const getMoveForLocation = (location: TokenLocation): MoveOption | undefined => {
-    return targetLocations.find(m => {
-      if (m.to.type !== location.type) return false;
-      return m.to.index === location.index;
-    });
+    if (selectedTokenId) {
+      return targetLocations.find(m => {
+        if (m.to.type !== location.type) return false;
+        return m.to.index === location.index;
+      });
+    }
+    // If no token selected yet, clicking the glowing start square triggers the EXIT_BASE move!
+    return validMoves.find(
+      m => m.type === 'EXIT_BASE' && m.to.type === location.type && m.to.index === location.index
+    );
   };
 
   // Find token at a given location
@@ -119,7 +128,7 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
     <div className="w-full flex items-center justify-center relative select-none touch-none">
       <svg
         viewBox={`0 0 ${geometry.viewBoxSize} ${geometry.viewBoxSize}`}
-        className="w-full max-w-[94vw] sm:max-w-[580px] lg:max-w-[680px] max-h-[44vh] sm:max-h-[55vh] md:max-h-[62vh] aspect-square drop-shadow-2xl overflow-visible touch-none"
+        className="w-full max-w-[98vw] sm:max-w-[620px] lg:max-w-[700px] max-h-[58vh] sm:max-h-[66vh] aspect-square drop-shadow-2xl overflow-visible touch-none"
       >
         <defs>
           {/* Radial Board Glow */}
@@ -328,7 +337,7 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                     <circle
                       cx={point.x}
                       cy={point.y}
-                      r="16"
+                      r="18"
                       fill="#0b0f19"
                       stroke={isTarget ? '#22d3ee' : colorStyles.stroke}
                       strokeWidth={isTarget ? '2.5' : '1.5'}
@@ -342,7 +351,7 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                         y={point.y + 4}
                         textAnchor="middle"
                         fill={colorStyles.text}
-                        fontSize="10"
+                        fontSize="11"
                         fontWeight="600"
                         opacity="0.6"
                       >
@@ -403,16 +412,14 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
               <circle
                 cx={node.x}
                 cy={node.y}
-                r={node.isStartNode ? 16 : 12}
+                r={node.isStartNode ? 18 : 14}
                 fill={node.isStartNode ? '#1e293b' : '#0f172a'}
                 stroke={
                   isTarget
                     ? '#22d3ee'
                     : node.isStartNode && ownerStyles
                     ? ownerStyles.stroke
-                    : node.isPreHomeNode
-                    ? '#475569'
-                    : '#1e293b'
+                    : '#334155'
                 }
                 strokeWidth={isTarget ? 3 : node.isStartNode ? 2.5 : 1.5}
                 strokeDasharray={node.isPreHomeNode && !isTarget ? '3 3' : undefined}
@@ -484,7 +491,7 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                     key={`base-slot-${seat.id}-${slotIndex}`}
                     cx={point.x}
                     cy={point.y}
-                    r="15"
+                    r="17"
                     fill="#080c14"
                     stroke={colorStyles.stroke}
                     strokeWidth="1.5"
@@ -607,7 +614,7 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
               <circle
                 cx={0}
                 cy={0}
-                r="15"
+                r="17"
                 fill={colorStyles.fill}
                 stroke={isSelected ? '#ffffff' : colorStyles.stroke}
                 strokeWidth={isSelected ? 2.5 : 1.5}
@@ -616,10 +623,10 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
 
               {/* Specular 3D highlight */}
               <ellipse
-                cx={-4}
-                cy={-4}
-                rx="5"
-                ry="3"
+                cx={-5}
+                cy={-5}
+                rx="6"
+                ry="3.5"
                 fill="#ffffff"
                 fillOpacity="0.4"
               />
@@ -627,10 +634,10 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
               {/* Token Number/Letter Label */}
               <text
                 x={0}
-                y={3.5}
+                y={4}
                 textAnchor="middle"
                 fill="#ffffff"
-                fontSize="9"
+                fontSize="10.5"
                 fontWeight="bold"
                 className="pointer-events-none drop-shadow-sm font-sans"
               >

@@ -385,9 +385,13 @@ export function App() {
       return;
     }
     if (token.location.type === 'BASE') {
-      setHintMessage("Ce pion est en base (au pieu). Seul un As ou un Roi permet de sortir un pion sur la case départ !");
+      if (selectedCard.rank === 'A' || selectedCard.rank === 'K') {
+        setHintMessage("Votre case de départ est déjà occupée par l'un de vos pions. Avancez-le pour libérer la sortie !");
+      } else {
+        setHintMessage("Ce pion est en base (au pieu). Seul un As ou un Roi permet de sortir un pion sur la case départ !");
+      }
     } else if (token.location.type === 'HOME') {
-      setHintMessage("Ce pion est dans la maison d'arrivée. Il lui faut un compte exact (1, 2 ou 3) pour avancer.");
+      setHintMessage("Ce pion est dans la maison d'arrivée. Il lui faut un compte exact pour avancer.");
     } else {
       setHintMessage(`La carte ${selectedCard.rank}${selectedCard.symbol} ne permet pas de déplacer ce pion.`);
     }
@@ -518,10 +522,10 @@ export function App() {
       />
 
       {/* Arène de jeu principale */}
-      <main className="flex-1 flex flex-col items-center justify-between p-2 sm:p-4 max-w-7xl w-full mx-auto relative">
+      <main className="flex-1 flex flex-col items-center justify-between p-1 sm:p-3 max-w-7xl w-full mx-auto relative gap-1 sm:gap-2">
         {/* Bulle d'aide / Toast d'information des règles */}
         {hintMessage && (
-          <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-slate-900/95 border border-cyan-500/60 text-cyan-200 text-xs font-medium shadow-2xl shadow-cyan-950/70 flex items-center gap-2.5 animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-md">
+          <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 px-3.5 py-2 rounded-xl bg-slate-900/95 border border-cyan-500/60 text-cyan-200 text-xs font-medium shadow-2xl shadow-cyan-950/70 flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-md max-w-[90vw]">
             <Info className="w-4 h-4 text-cyan-400 shrink-0 animate-pulse" />
             <span>{hintMessage}</span>
             <button
@@ -534,7 +538,7 @@ export function App() {
         )}
 
         {/* Plateau dynamique SVG */}
-        <div className="w-full flex-1 flex items-center justify-center my-1 sm:my-2">
+        <div className="w-full flex-1 flex items-center justify-center my-0.5 sm:my-1">
           <GameBoardSVG
             mode={gameState.mode}
             seats={gameState.seats}
@@ -552,7 +556,7 @@ export function App() {
         </div>
 
         {/* Barre de jeu : Main du joueur avec protection des tours et cartes adverses masquées */}
-        <div className="w-full mt-2">
+        <div className="w-full mt-1 sm:mt-2">
           <HandView
             cards={currentHand}
             activeSeat={gameState.activeSeat}

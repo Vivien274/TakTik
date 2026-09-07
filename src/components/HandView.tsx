@@ -144,7 +144,7 @@ export const HandView: React.FC<HandViewProps> = ({
           return (
             <div
               key={card.id}
-              className={`relative flex-shrink-0 w-14 sm:w-20 md:w-28 h-20 sm:h-28 md:h-40 rounded-xl transition-all duration-200 select-none flex flex-col justify-between p-1.5 sm:p-2.5 md:p-3 ${
+              className={`relative flex-shrink-0 w-16 sm:w-24 md:w-28 h-24 sm:h-34 md:h-40 rounded-xl sm:rounded-2xl transition-all duration-200 select-none flex flex-col justify-between p-2 sm:p-2.5 md:p-3 ${
                 !isMyTurn
                   ? 'glass-card bg-slate-900/70 opacity-80 border-slate-700/70 cursor-default'
                   : isSelected
@@ -163,14 +163,14 @@ export const HandView: React.FC<HandViewProps> = ({
                 {/* Header (Rank & Suit) */}
                 <div className="flex items-center justify-between">
                   <span
-                    className={`text-sm sm:text-lg md:text-2xl font-black font-display leading-none ${
+                    className={`text-base sm:text-xl md:text-2xl font-black font-display leading-none ${
                       card.isRed ? 'text-rose-500' : 'text-slate-100'
                     }`}
                   >
                     {card.rank}
                   </span>
                   <span
-                    className={`text-xs sm:text-base md:text-xl leading-none ${
+                    className={`text-sm sm:text-lg md:text-xl leading-none ${
                       card.isRed ? 'text-rose-500' : 'text-slate-300'
                     }`}
                   >
@@ -181,7 +181,7 @@ export const HandView: React.FC<HandViewProps> = ({
                 {/* Card Center Symbol */}
                 <div className="self-center my-auto">
                   <span
-                    className={`text-lg sm:text-2xl md:text-4xl opacity-20 leading-none ${
+                    className={`text-2xl sm:text-3xl md:text-4xl opacity-20 leading-none ${
                       card.isRed ? 'text-rose-400' : 'text-slate-400'
                     }`}
                   >

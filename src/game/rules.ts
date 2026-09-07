@@ -248,23 +248,26 @@ export function getLegalMovesForCard(
   if (card.rank === 'A' || card.rank === 'K') {
     const baseTokens = eligibleTokens.filter(t => t.location.type === 'BASE');
     if (baseTokens.length > 0) {
-      // Pick first base token (all base tokens of same seat are equivalent for exit)
-      const token = baseTokens[0];
       const targetLocation: TokenLocation = { type: 'TRACK', index: seatConfig.startIndex };
       const occupyingToken = findTokenAtLocation(targetLocation, undefined, tokens);
+      const isBlockedBySelf = occupyingToken && occupyingToken.seat === activeSeat;
 
-      moves.push({
-        type: 'EXIT_BASE',
-        cardId: card.id,
-        tokenId: token.id,
-        from: token.location,
-        to: targetLocation,
-        steps: 0,
-        capturedTokenId: occupyingToken?.id,
-        description: occupyingToken
-          ? `Sortie de base & capture du pion ${occupyingToken.seat} !`
-          : `Sortie de base vers la case départ`,
-      });
+      if (!isBlockedBySelf) {
+        for (const token of baseTokens) {
+          moves.push({
+            type: 'EXIT_BASE',
+            cardId: card.id,
+            tokenId: token.id,
+            from: token.location,
+            to: targetLocation,
+            steps: 0,
+            capturedTokenId: occupyingToken ? occupyingToken.id : undefined,
+            description: occupyingToken
+              ? `Sortie de base & capture du pion ${occupyingToken.seat} !`
+              : `Sortie de base vers la case départ`,
+          });
+        }
+      }
     }
   }
 
