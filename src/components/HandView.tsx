@@ -7,6 +7,7 @@ import { Sparkles, Trash2, ArrowRightLeft, Split, AlertCircle, Lock } from 'luci
 interface HandViewProps {
   cards: Card[];
   activeSeat: Seat;
+  displayedSeat?: Seat;
   seats: SeatConfig[];
   mode: GameMode;
   tokens: Record<string, Token>;
@@ -24,6 +25,7 @@ interface HandViewProps {
 export const HandView: React.FC<HandViewProps> = ({
   cards,
   activeSeat,
+  displayedSeat,
   seats,
   mode,
   tokens,
@@ -37,7 +39,12 @@ export const HandView: React.FC<HandViewProps> = ({
   onDiscardCard,
 }) => {
   const currentSeatConfig = seats.find(s => s.id === activeSeat);
-  const isMyTurn = isLocalGame || (localPlayerRole !== null && currentSeatConfig?.humanPlayer === localPlayerRole);
+  const mySeatConfig = seats.find(s => s.id === (displayedSeat || activeSeat));
+  const isMyTurn =
+    isLocalGame ||
+    (localPlayerRole !== null &&
+      currentSeatConfig?.humanPlayer === localPlayerRole &&
+      (!displayedSeat || displayedSeat === activeSeat));
 
   const anyMovePossible = React.useMemo(
     () => hasAnyLegalMove(cards, activeSeat, mode, tokens),
@@ -59,9 +66,9 @@ export const HandView: React.FC<HandViewProps> = ({
             }}
           />
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                Tour Actuel
+                Tour :
               </span>
               <span
                 className="text-xs font-black px-2 py-0.5 rounded-md border"
@@ -73,13 +80,18 @@ export const HandView: React.FC<HandViewProps> = ({
               >
                 {currentSeatConfig?.name}
               </span>
+              {!isLocalGame && mySeatConfig && (
+                <span className="text-[11px] text-slate-300 font-medium">
+                  • Votre main : <strong style={{ color: mySeatConfig.hex }}>{mySeatConfig.name}</strong> ({cards.length} carte{cards.length > 1 ? 's' : ''})
+                </span>
+              )}
             </div>
             <div className="text-xs sm:text-sm font-semibold text-white">
               {isMyTurn ? (
                 <span className="text-emerald-300 font-bold">C'est votre tour de jouer !</span>
               ) : (
                 <span className="text-slate-400">
-                  En attente du coup de <strong className="text-white">Joueur {currentSeatConfig?.humanPlayer}</strong>...
+                  En attente du coup de <strong className="text-white">Joueur {currentSeatConfig?.humanPlayer} ({currentSeatConfig?.name})</strong>...
                 </span>
               )}
             </div>

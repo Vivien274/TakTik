@@ -269,11 +269,42 @@ export function App() {
     }
   };
 
+  // Déterminer le siège dont la main doit être affichée à l'écran local
+  const displayedSeat: Seat = React.useMemo(() => {
+    if (isLocalGame) {
+      // En partie locale sur le même écran, la main affichée tourne avec le joueur actif
+      return gameState.activeSeat;
+    }
+    // En multijoueur en ligne : chaque joueur conserve SA PROPRE MAIN privée à l'écran !
+    if (gameState.mode === 'PURE_DUEL') {
+      return localPlayerRole === 2 ? 'P2' : 'P1';
+    }
+    // Mode Classique 4 sièges (2 joueurs contrôlant 2 sièges chacun) :
+    if (localPlayerRole === 2) {
+      // Joueur 2 contrôle EST et OUEST
+      if (gameState.activeSeat === 'EAST' || gameState.activeSeat === 'WEST') {
+        return gameState.activeSeat;
+      }
+      return gameState.activeSeat === 'NORTH' ? 'EAST' : 'WEST';
+    } else {
+      // Joueur 1 contrôle NORD et SUD
+      if (gameState.activeSeat === 'NORTH' || gameState.activeSeat === 'SOUTH') {
+        return gameState.activeSeat;
+      }
+      return gameState.activeSeat === 'EAST' ? 'SOUTH' : 'NORTH';
+    }
+  }, [isLocalGame, localPlayerRole, gameState.mode, gameState.activeSeat]);
+
   // Calcul du joueur actif et protection des tours
   const activeSeatConfig = gameState.seats.find(s => s.id === gameState.activeSeat);
-  const isMyTurn = isLocalGame || (localPlayerRole !== null && activeSeatConfig?.humanPlayer === localPlayerRole);
+  const isMyTurn =
+    isLocalGame ||
+    (localPlayerRole !== null &&
+      activeSeatConfig?.humanPlayer === localPlayerRole &&
+      displayedSeat === gameState.activeSeat);
 
-  const currentHand = gameState.hands[gameState.activeSeat] || [];
+  // La main affichée à l'écran est celle du joueur local
+  const currentHand = gameState.hands[displayedSeat] || [];
   const selectedCard = currentHand.find(c => c.id === gameState.selectedCardId) || null;
 
   // Calcul des coups légaux pour la carte sélectionnée
@@ -525,6 +556,7 @@ export function App() {
           <HandView
             cards={currentHand}
             activeSeat={gameState.activeSeat}
+            displayedSeat={displayedSeat}
             seats={gameState.seats}
             mode={gameState.mode}
             tokens={gameState.tokens}
