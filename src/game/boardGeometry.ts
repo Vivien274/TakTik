@@ -92,20 +92,21 @@ export function getBoardGeometry(mode: GameMode): BoardGeometryConfig {
       WEST: [],
     };
 
-    // Base pods: 4 slots arranged in 2x2 grid
-    // P1 Base pod near bottom-right
+    // Base pods: 4 slots in the corners outside the circular board
+    // P1 Base reserve pod in bottom-right corner (outside board disc)
+    // P2 Base reserve pod in top-left corner (outside board disc)
     const baseSlots: Record<Seat, Point[]> = {
       P1: [
-        { x: center.x + 220, y: center.y + 240 },
-        { x: center.x + 270, y: center.y + 240 },
-        { x: center.x + 220, y: center.y + 290 },
-        { x: center.x + 270, y: center.y + 290 },
+        { x: 735, y: 735 },
+        { x: 785, y: 735 },
+        { x: 735, y: 785 },
+        { x: 785, y: 785 },
       ],
       P2: [
-        { x: center.x - 270, y: center.y - 290 },
-        { x: center.x - 220, y: center.y - 290 },
-        { x: center.x - 270, y: center.y - 240 },
-        { x: center.x - 220, y: center.y - 240 },
+        { x: 115, y: 115 },
+        { x: 165, y: 115 },
+        { x: 115, y: 165 },
+        { x: 165, y: 165 },
       ],
       NORTH: [],
       EAST: [],
@@ -200,35 +201,35 @@ export function getBoardGeometry(mode: GameMode): BoardGeometryConfig {
     P2: [],
   };
 
-  // Base pods in the 4 corners:
-  // North (Top-Left corner)
-  // East (Top-Right corner)
-  // South (Bottom-Right corner)
-  // West (Bottom-Left corner)
+  // Base reserve pods in the 4 corners (completely outside the circular board)
+  // North: Top-Left corner
+  // East: Top-Right corner
+  // South: Bottom-Right corner
+  // West: Bottom-Left corner
   const baseSlots: Record<Seat, Point[]> = {
     NORTH: [
-      { x: center.x - 260, y: center.y - 260 },
-      { x: center.x - 215, y: center.y - 260 },
-      { x: center.x - 260, y: center.y - 215 },
-      { x: center.x - 215, y: center.y - 215 },
+      { x: 115, y: 115 },
+      { x: 165, y: 115 },
+      { x: 115, y: 165 },
+      { x: 165, y: 165 },
     ],
     EAST: [
-      { x: center.x + 215, y: center.y - 260 },
-      { x: center.x + 260, y: center.y - 260 },
-      { x: center.x + 215, y: center.y - 215 },
-      { x: center.x + 260, y: center.y - 215 },
+      { x: 735, y: 115 },
+      { x: 785, y: 115 },
+      { x: 735, y: 165 },
+      { x: 785, y: 165 },
     ],
     SOUTH: [
-      { x: center.x + 215, y: center.y + 215 },
-      { x: center.x + 260, y: center.y + 215 },
-      { x: center.x + 215, y: center.y + 260 },
-      { x: center.x + 260, y: center.y + 260 },
+      { x: 735, y: 735 },
+      { x: 785, y: 735 },
+      { x: 735, y: 785 },
+      { x: 785, y: 785 },
     ],
     WEST: [
-      { x: center.x - 260, y: center.y + 215 },
-      { x: center.x - 215, y: center.y + 215 },
-      { x: center.x - 260, y: center.y + 260 },
-      { x: center.x - 215, y: center.y + 260 },
+      { x: 115, y: 735 },
+      { x: 165, y: 735 },
+      { x: 115, y: 785 },
+      { x: 165, y: 785 },
     ],
     P1: [],
     P2: [],

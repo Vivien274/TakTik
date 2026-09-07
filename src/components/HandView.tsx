@@ -122,48 +122,32 @@ export const HandView: React.FC<HandViewProps> = ({
         </div>
       </div>
 
-      {/* Cards Row: If Opponent Turn in Online mode, render Cards Face Down */}
+      {/* Cards Row: Always rendered Face-Up with full values */}
       <div className="w-full flex items-center justify-center gap-2 sm:gap-4 overflow-x-auto py-2 px-2">
-        {!isMyTurn ? (
-          // Adversaire : Cartes Face Cachée
-          cards.map((card, idx) => (
-            <div
-              key={`facedown-${card.id || idx}`}
-              className="relative flex-shrink-0 w-20 sm:w-28 h-32 sm:h-40 rounded-xl glass-card bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 flex flex-col items-center justify-center p-3 select-none opacity-85 shadow-lg"
-            >
-              <div className="w-10 h-14 rounded-lg border border-slate-700/80 bg-slate-900 flex items-center justify-center">
-                <span className="text-xl opacity-30 text-cyan-400 font-mono font-bold">♠</span>
-              </div>
-              <span className="text-[10px] text-slate-500 mt-2 font-mono uppercase tracking-wider">
-                Masquée
-              </span>
-            </div>
-          ))
-        ) : (
-          // Joueur Local : Cartes Face Visible
-          cards.map((card) => {
-            const isSelected = card.id === selectedCardId;
-            const moves = getLegalMovesForCard(card, activeSeat, mode, tokens, split7Remaining);
-            const hasMoves = moves.length > 0;
+        {cards.map((card) => {
+          const isSelected = card.id === selectedCardId;
+          const moves = isMyTurn ? getLegalMovesForCard(card, activeSeat, mode, tokens, split7Remaining) : [];
+          const hasMoves = moves.length > 0;
 
-            return (
-              <div
-                key={card.id}
-                className={`relative flex-shrink-0 w-20 sm:w-28 h-32 sm:h-40 rounded-xl transition-all duration-200 cursor-pointer flex flex-col justify-between p-2.5 sm:p-3 select-none ${
-                  isSelected
-                    ? 'ring-2 ring-cyan-400 -translate-y-3 shadow-2xl shadow-cyan-500/30 bg-slate-800'
-                    : hasMoves
-                    ? 'hover:-translate-y-2 glass-card hover:border-slate-400 bg-slate-900/80 shadow-md'
-                    : 'opacity-50 glass-card bg-slate-950/60 hover:opacity-80'
-                }`}
-                onClick={() => {
-                  if (hasMoves) {
-                    onSelectCard(card.id);
-                  } else if (!anyMovePossible) {
-                    onSelectCard(card.id);
-                  }
-                }}
-              >
+          return (
+            <div
+              key={card.id}
+              className={`relative flex-shrink-0 w-20 sm:w-28 h-32 sm:h-40 rounded-xl transition-all duration-200 select-none flex flex-col justify-between p-2.5 sm:p-3 ${
+                !isMyTurn
+                  ? 'glass-card bg-slate-900/70 opacity-80 border-slate-700/70 cursor-default'
+                  : isSelected
+                  ? 'ring-2 ring-cyan-400 -translate-y-3 shadow-2xl shadow-cyan-500/30 bg-slate-800 cursor-pointer'
+                  : hasMoves
+                  ? 'hover:-translate-y-2 glass-card hover:border-slate-400 bg-slate-900/80 shadow-md cursor-pointer'
+                  : 'opacity-50 glass-card bg-slate-950/60 hover:opacity-80 cursor-pointer'
+              }`}
+              onClick={() => {
+                if (!isMyTurn) return;
+                if (hasMoves || !anyMovePossible) {
+                  onSelectCard(card.id);
+                }
+              }}
+            >
                 {/* Header (Rank & Suit) */}
                 <div className="flex items-center justify-between">
                   <span
@@ -218,8 +202,7 @@ export const HandView: React.FC<HandViewProps> = ({
                 )}
               </div>
             );
-          })
-        )}
+          })}
       </div>
 
       {/* Selected Card Move Options / Quick Guidance */}

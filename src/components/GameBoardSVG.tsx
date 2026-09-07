@@ -171,14 +171,22 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
           </filter>
         </defs>
 
-        {/* Outer Circular Board Background */}
+        {/* Central Circular Board Plate (Le plateau de jeu en cercle distinct) */}
         <circle
           cx={geometry.center.x}
           cy={geometry.center.y}
-          r="435"
+          r="360"
           fill="url(#board-bg)"
-          stroke="#1e293b"
+          stroke="#334155"
           strokeWidth="3"
+        />
+        <circle
+          cx={geometry.center.x}
+          cy={geometry.center.y}
+          r="356"
+          fill="none"
+          stroke="#1e293b"
+          strokeWidth="1.5"
         />
 
         {/* Outer decorative track guide ring */}
@@ -415,18 +423,18 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
 
           return (
             <g key={`base-pod-${seat.id}`}>
-              {/* Pod container panel */}
+              {/* Pod container panel (Réserve extérieure au plateau) */}
               <rect
                 x={minX}
                 y={minY}
                 width={width}
                 height={height}
-                rx="20"
-                fill="#0b0f19"
-                fillOpacity="0.85"
+                rx="22"
+                fill="#070b14"
+                fillOpacity="0.95"
                 stroke={isCurrentActive ? colorStyles.stroke : '#1e293b'}
-                strokeWidth={isCurrentActive ? 2 : 1}
-                strokeOpacity={isCurrentActive ? 0.9 : 0.6}
+                strokeWidth={isCurrentActive ? 2.5 : 1.5}
+                strokeOpacity={isCurrentActive ? 1 : 0.6}
               />
 
               {/* Pod Seat Title */}
@@ -435,11 +443,12 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                 y={minY - 8}
                 textAnchor="middle"
                 fill={colorStyles.stroke}
-                fontSize="11"
-                fontWeight="bold"
-                letterSpacing="1"
+                fontSize="10"
+                fontWeight="900"
+                letterSpacing="1.2"
+                className="font-display"
               >
-                {seat.name.toUpperCase()}
+                RÉSERVE • {seat.name.toUpperCase()}
               </text>
 
               {/* 4 Base Slots */}
@@ -476,7 +485,12 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
           return (
             <g
               key={`token-${token.id}`}
-              className={isMyTurn ? 'cursor-pointer transition-transform' : ''}
+              style={{
+                transform: `translate(${coords.x}px, ${coords.y}px)`,
+                transition: 'transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1)',
+                willChange: 'transform',
+              }}
+              className={isMyTurn ? 'cursor-pointer' : ''}
               onClick={() => {
                 if (!isMyTurn) return;
                 if (isJackTargetSelectable && onSelectJackTarget) {
@@ -496,8 +510,8 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
               {/* Selected / Active Aura */}
               {isSelected && (
                 <circle
-                  cx={coords.x}
-                  cy={coords.y}
+                  cx={0}
+                  cy={0}
                   r="23"
                   fill="none"
                   stroke="#ffffff"
@@ -509,8 +523,8 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
               {/* Has available moves pulse ring */}
               {hasAvailableMoves && !isSelected && (
                 <circle
-                  cx={coords.x}
-                  cy={coords.y}
+                  cx={0}
+                  cy={0}
                   r="20"
                   fill="none"
                   stroke={colorStyles.stroke}
@@ -523,8 +537,8 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
               {/* Jack Target swap indicator */}
               {isJackTargetSelectable && (
                 <circle
-                  cx={coords.x}
-                  cy={coords.y}
+                  cx={0}
+                  cy={0}
                   r="22"
                   fill="none"
                   stroke="#facc15"
@@ -536,8 +550,8 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
 
               {/* Token Main Body with 3D gradient */}
               <circle
-                cx={coords.x}
-                cy={coords.y}
+                cx={0}
+                cy={0}
                 r="15"
                 fill={colorStyles.fill}
                 stroke={isSelected ? '#ffffff' : colorStyles.stroke}
@@ -547,8 +561,8 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
 
               {/* Specular 3D highlight */}
               <ellipse
-                cx={coords.x - 4}
-                cy={coords.y - 4}
+                cx={-4}
+                cy={-4}
                 rx="5"
                 ry="3"
                 fill="#ffffff"
@@ -557,8 +571,8 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
 
               {/* Token Number/Letter Label */}
               <text
-                x={coords.x}
-                y={coords.y + 3.5}
+                x={0}
+                y={3.5}
                 textAnchor="middle"
                 fill="#ffffff"
                 fontSize="9"
