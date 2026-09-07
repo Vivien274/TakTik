@@ -492,6 +492,7 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
           const location: TokenLocation = { type: 'TRACK', index: node.index };
           const matchingMove = getMoveForLocation(location);
           const isTarget = Boolean(matchingMove);
+          const isCapture = Boolean(matchingMove?.capturedTokenId);
           const ownerColor = node.seatOwner ? getSeatColor(node.seatOwner) : null;
           const ownerStyles = ownerColor ? COLOR_MAP[ownerColor] : null;
 
@@ -509,9 +510,9 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                   cx={node.x}
                   cy={node.y}
                   r="20"
-                  fill="#22d3ee"
-                  fillOpacity="0.25"
-                  stroke="#22d3ee"
+                  fill={isCapture ? '#f43f5e' : '#22d3ee'}
+                  fillOpacity={isCapture ? '0.35' : '0.25'}
+                  stroke={isCapture ? '#f43f5e' : '#22d3ee'}
                   strokeWidth="2.5"
                   filter="url(#glow-target)"
                 >
@@ -650,7 +651,29 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                 if (!isMyTurn) return;
                 if (isJackTargetSelectable && onSelectJackTarget) {
                   onSelectJackTarget(token.id);
-                } else if (hasAvailableMoves) {
+                  return;
+                }
+
+                // Direct Capture Check: If clicking this token captures it
+                if (selectedTokenId) {
+                  const directCaptureMove = validMoves.find(
+                    m => m.tokenId === selectedTokenId && m.capturedTokenId === token.id
+                  );
+                  if (directCaptureMove) {
+                    onExecuteMove(directCaptureMove);
+                    return;
+                  }
+                }
+
+                if (!selectedTokenId) {
+                  const potentialCaptures = validMoves.filter(m => m.capturedTokenId === token.id);
+                  if (potentialCaptures.length === 1) {
+                    onExecuteMove(potentialCaptures[0]);
+                    return;
+                  }
+                }
+
+                if (hasAvailableMoves) {
                   const tokenMoves = movesByTokenId.get(token.id) || [];
                   if (tokenMoves.length === 1) {
                     onExecuteMove(tokenMoves[0]);

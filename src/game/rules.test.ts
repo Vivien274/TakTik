@@ -220,4 +220,50 @@ console.log('🧪 Starting Taktik Rule Engine Test Suite...\n');
   console.log('✅ Test 9 Passed: WePlay Card 5 can move opponent token');
 }
 
-console.log('\n🎉 ALL 9 TEST SUITES PASSED CLEANLY!\n');
+// Test 10: Card 5 pushing opponent 1 space from their home does NOT enter home (bypasses garage)
+{
+  const tokens = createInitialTokens('PURE_DUEL');
+  // P2's homePreIndex in Pure Duel is 15. Put P2 token at index 14 (1 space before pre-home, 2 spaces before entrance)
+  tokens['token-P2-0'].location = { type: 'TRACK', index: 14 };
+  const card5: Card = {
+    id: 'test-card-5-bypass',
+    suit: 'CLUBS',
+    rank: '5',
+    value: 5,
+    description: 'Move any token +5',
+    symbol: '♣',
+    isRed: false,
+  };
+  // P1 plays Card 5 on opponent P2
+  const moves = getLegalMovesForCard(card5, 'P1', 'PURE_DUEL', tokens);
+  const moveP2 = moves.find(m => m.tokenId === 'token-P2-0');
+  assert(moveP2 !== undefined);
+  // Must stay on TRACK, not HOME!
+  assert.strictEqual(moveP2.to.type, 'TRACK', 'Opponent token pushed with 5 must stay on track, not enter garage');
+  assert.strictEqual(moveP2.to.index, (14 + 5) % 32, 'Must advance 5 spaces along track');
+  console.log('✅ Test 10 Passed: Card 5 pushes opponent past home along track without entering garage');
+}
+
+// Test 11: Exact landing capture ("faire sauter un pion")
+{
+  const tokens = createInitialTokens('PURE_DUEL');
+  tokens['token-P1-0'].location = { type: 'TRACK', index: 5 };
+  tokens['token-P2-0'].location = { type: 'TRACK', index: 8 }; // Opponent token at index 8
+  const card3: Card = {
+    id: 'test-card-3',
+    suit: 'HEARTS',
+    rank: '3',
+    value: 3,
+    description: 'Advance 3',
+    symbol: '♥',
+    isRed: true,
+  };
+  const moves = getLegalMovesForCard(card3, 'P1', 'PURE_DUEL', tokens);
+  const captureMove = moves.find(m => m.tokenId === 'token-P1-0');
+  assert(captureMove !== undefined);
+  assert.strictEqual(captureMove.to.index, 8);
+  assert.strictEqual(captureMove.capturedTokenId, 'token-P2-0', 'Landing on opponent with exact value must capture it');
+  console.log('✅ Test 11 Passed: Exact landing captures the target token');
+}
+
+console.log('\n🎉 ALL 11 TEST SUITES PASSED CLEANLY!\n');

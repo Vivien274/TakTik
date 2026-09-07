@@ -159,7 +159,8 @@ export function calculateForwardDestination(
   steps: number,
   tokenSeat: Seat,
   mode: GameMode,
-  tokens: Record<string, Token>
+  tokens: Record<string, Token>,
+  allowHomeEntry: boolean = true
 ): { destination: TokenLocation; valid: boolean } {
   const configs = getSeatConfigs(mode);
   const seatConfig = configs.find(s => s.id === tokenSeat);
@@ -190,8 +191,8 @@ export function calculateForwardDestination(
 
   while (remainingSteps > 0) {
     // If currently at the pre-home node and moving forward:
-    // In Jackaroo rules, if remainingSteps fits into HOME (slots 0..3), enter HOME!
-    if (currentIndex === seatConfig.homePreIndex) {
+    // Only enter HOME if allowHomeEntry is true (pushing an opponent prevents home entry!)
+    if (allowHomeEntry && currentIndex === seatConfig.homePreIndex) {
       const homeSlotTarget = remainingSteps - 1;
       if (homeSlotTarget >= 0 && homeSlotTarget <= 3) {
         let blockedInHome = false;
@@ -359,15 +360,20 @@ export function getLegalMovesForCard(
 
   // Check 5: Standard forward moves
   // Special WePlay Rule for Card 5: can move ANY token on the track (friendly, partner, or opponent)!
+  // When pushing an OPPONENT token, allowHomeEntry is FALSE: it pushes the opponent forward along the track,
+  // bypassing their garage so they miss their home entrance!
   if (card.rank === '5') {
     const allTrackTokens = Object.values(tokens).filter(t => t.location.type === 'TRACK');
     for (const token of allTrackTokens) {
+      const isOpponent = token.seat !== activeSeat && token.seat !== seatConfig.partnerSeat;
+      const allowHomeEntry = !isOpponent;
       const { destination, valid } = calculateForwardDestination(
         token.location,
         5,
         token.seat,
         mode,
-        tokens
+        tokens,
+        allowHomeEntry
       );
       if (valid) {
         const occupyingToken = destination.type === 'TRACK'
@@ -385,9 +391,11 @@ export function getLegalMovesForCard(
           capturedTokenId: occupyingToken?.id,
           description: destination.type === 'HOME'
             ? `Entrer dans la Maison (${token.seat}) case ${destination.index + 1}`
+            : isOpponent
+            ? `Pousser pion adverse ${token.seat} de +5 (reste sur la piste / évite le garage !)${occupyingToken ? ` (Capture ${occupyingToken.seat} !)` : ''}`
             : isMine
             ? `Avancer de 5 vers case ${destination.index + 1}${occupyingToken ? ` (Capture !)` : ''}`
-            : `Avancer pion ${token.seat} de 5 vers case ${destination.index + 1}`,
+            : `Avancer pion ${token.seat} de 5 vers case ${destination.index + 1}${occupyingToken ? ` (Capture !)` : ''}`,
         });
       }
     }
