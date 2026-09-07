@@ -25,10 +25,17 @@ export interface BoardGeometryConfig {
   baseSlots: Record<Seat, Point[]>;
 }
 
+export function getTrackAngle(index: number, mode: GameMode): number {
+  if (mode === 'PURE_DUEL') {
+    return Math.PI / 2 + (index * 2 * Math.PI) / 32;
+  }
+  return -Math.PI / 2 + (index * 2 * Math.PI) / 64;
+}
+
 export function getBoardGeometry(mode: GameMode): BoardGeometryConfig {
   const viewBoxSize = 900;
   const center: Point = { x: 450, y: 450 };
-  const trackRadius = 330;
+  const trackRadius = 355;
 
   if (mode === 'PURE_DUEL') {
     const totalTrackNodes = 32;
@@ -38,7 +45,7 @@ export function getBoardGeometry(mode: GameMode): BoardGeometryConfig {
     // P2 (Red): Starts at top (index 16, angle 270 deg / math angle 3PI/2)
     for (let i = 0; i < totalTrackNodes; i++) {
       // Clockwise angle: start at bottom (PI/2), increase by (2*PI / 32)
-      const angle = Math.PI / 2 + (i * 2 * Math.PI) / totalTrackNodes;
+      const angle = getTrackAngle(i, 'PURE_DUEL');
       const x = center.x + trackRadius * Math.cos(angle);
       const y = center.y + trackRadius * Math.sin(angle);
 
@@ -134,7 +141,7 @@ export function getBoardGeometry(mode: GameMode): BoardGeometryConfig {
   // South start: index 32 at bottom (angle = PI/2)
   // West start: index 48 at left (angle = PI)
   for (let i = 0; i < totalTrackNodes; i++) {
-    const angle = -Math.PI / 2 + (i * 2 * Math.PI) / totalTrackNodes;
+    const angle = getTrackAngle(i, 'TWO_HANDED_CLASSIC');
     const x = center.x + trackRadius * Math.cos(angle);
     const y = center.y + trackRadius * Math.sin(angle);
 

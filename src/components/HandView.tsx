@@ -20,6 +20,7 @@ interface HandViewProps {
   isLocalGame: boolean;
   onSelectCard: (cardId: string) => void;
   onDiscardCard: (cardId: string) => void;
+  onExecuteMove?: (move: MoveOption) => void;
 }
 
 export const HandView: React.FC<HandViewProps> = ({
@@ -30,6 +31,7 @@ export const HandView: React.FC<HandViewProps> = ({
   mode,
   tokens,
   selectedCardId,
+  selectedTokenId,
   split7Remaining,
   jackFirstSelectedTokenId,
   validMovesForSelectedCard,
@@ -37,6 +39,7 @@ export const HandView: React.FC<HandViewProps> = ({
   isLocalGame,
   onSelectCard,
   onDiscardCard,
+  onExecuteMove,
 }) => {
   const currentSeatConfig = seats.find(s => s.id === activeSeat);
   const mySeatConfig = seats.find(s => s.id === (displayedSeat || activeSeat));
@@ -220,11 +223,34 @@ export const HandView: React.FC<HandViewProps> = ({
 
       {/* Selected Card Move Options / Quick Guidance */}
       {isMyTurn && selectedCard && validMovesForSelectedCard.length > 0 && (
-        <div className="mt-3 text-center text-xs text-cyan-300 flex items-center gap-2 bg-cyan-950/40 px-4 py-2 rounded-full border border-cyan-800/50">
-          <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-          <span>
-            Carte <strong>{selectedCard.rank}{selectedCard.symbol}</strong> active : Cliquez sur un pion ou sur une case lumineuse en surbrillance !
-          </span>
+        <div className="mt-2 text-center text-xs text-cyan-300 flex items-center justify-center gap-2 bg-cyan-950/60 px-4 py-2 rounded-full border border-cyan-800/60 backdrop-blur-md flex-wrap">
+          <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+          {selectedTokenId &&
+          validMovesForSelectedCard.filter(m => m.tokenId === selectedTokenId).length > 1 ? (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-white">Choisir l'action pour ce pion :</span>
+              {validMovesForSelectedCard
+                .filter(m => m.tokenId === selectedTokenId)
+                .map((m, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => onExecuteMove?.(m)}
+                    className="px-3 py-1 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs shadow-md shadow-cyan-500/30 active:scale-95 transition-all"
+                  >
+                    {m.type === 'EXIT_BASE'
+                      ? 'Sortir sur Départ'
+                      : m.steps > 0
+                      ? `+${m.steps} cases`
+                      : `${m.steps} cases`}
+                  </button>
+                ))}
+            </div>
+          ) : (
+            <span>
+              Carte <strong>{selectedCard.rank}{selectedCard.symbol}</strong> : Cliquez directement sur votre pion pour le déplacer !
+            </span>
+          )}
         </div>
       )}
     </div>

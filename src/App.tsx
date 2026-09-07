@@ -573,6 +573,7 @@ export function App() {
             isLocalGame={isLocalGame}
             onSelectCard={handleSelectCard}
             onDiscardCard={handleDiscardCard}
+            onExecuteMove={handleExecuteMove}
           />
         </div>
       </main>

@@ -7,10 +7,11 @@ import type {
   Token,
   TokenLocation,
 } from '../game/types';
-import type { BoardGeometryConfig } from '../game/boardGeometry';
+import type { BoardGeometryConfig, Point } from '../game/boardGeometry';
 import {
   getBoardGeometry,
   getTokenCoordinates,
+  getTrackAngle,
 } from '../game/boardGeometry';
 
 interface GameBoardSVGProps {
@@ -124,11 +125,132 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
     return seat?.color || 'blue';
   };
 
+  // State to animate moving tokens along the circular board track
+  const [animatingPositions, setAnimatingPositions] = React.useState<Record<string, Point>>({});
+  const prevTokensRef = React.useRef<Record<string, Token>>(tokens);
+
+  React.useEffect(() => {
+    const prev = prevTokensRef.current;
+    prevTokensRef.current = tokens;
+
+    // Identify tokens whose locations changed
+    const movedTokens: Array<{
+      id: string;
+      prevLoc: TokenLocation;
+      currLoc: TokenLocation;
+      prevSeat: Seat;
+      currSeat: Seat;
+    }> = [];
+
+    for (const [id, token] of Object.entries(tokens)) {
+      const p = prev[id];
+      if (
+        p &&
+        (p.location.type !== token.location.type || p.location.index !== token.location.index)
+      ) {
+        movedTokens.push({
+          id,
+          prevLoc: p.location,
+          currLoc: token.location,
+          prevSeat: p.seat,
+          currSeat: token.seat,
+        });
+      }
+    }
+
+    if (movedTokens.length === 0) return;
+
+    const startTime = performance.now();
+    const duration = 460; // ms
+
+    let animFrameId: number;
+
+    const animate = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      const eased = 1 - Math.pow(1 - progress, 3); // smooth easeOutCubic
+
+      const newPositions: Record<string, Point> = {};
+
+      for (const item of movedTokens) {
+        const fromCoords = getTokenCoordinates(item.prevLoc, item.prevSeat, geometry);
+        const toCoords = getTokenCoordinates(item.currLoc, item.currSeat, geometry);
+
+        if (item.prevLoc.type === 'TRACK' && item.currLoc.type === 'TRACK') {
+          const total = geometry.totalTrackNodes;
+          const fromAngle = getTrackAngle(item.prevLoc.index, mode);
+          const toAngle = getTrackAngle(item.currLoc.index, mode);
+          const isBackward = (item.prevLoc.index - item.currLoc.index + total) % total === 4;
+
+          let diffAngle = toAngle - fromAngle;
+          if (isBackward) {
+            while (diffAngle > 0) diffAngle -= 2 * Math.PI;
+          } else {
+            while (diffAngle < 0) diffAngle += 2 * Math.PI;
+            if (diffAngle === 0) diffAngle = 2 * Math.PI;
+          }
+
+          const angle = fromAngle + eased * diffAngle;
+          newPositions[item.id] = {
+            x: Math.round((geometry.center.x + geometry.trackRadius * Math.cos(angle)) * 10) / 10,
+            y: Math.round((geometry.center.y + geometry.trackRadius * Math.sin(angle)) * 10) / 10,
+          };
+        } else if (item.prevLoc.type === 'TRACK' && item.currLoc.type === 'HOME') {
+          const seatCfg = seats.find(s => s.id === item.currSeat);
+          const preHomeIdx = seatCfg?.homePreIndex ?? 0;
+          const fromAngle = getTrackAngle(item.prevLoc.index, mode);
+          const preHomeAngle = getTrackAngle(preHomeIdx, mode);
+          let diffAngle = preHomeAngle - fromAngle;
+          while (diffAngle < 0) diffAngle += 2 * Math.PI;
+
+          const preHomeCoords = {
+            x: geometry.center.x + geometry.trackRadius * Math.cos(preHomeAngle),
+            y: geometry.center.y + geometry.trackRadius * Math.sin(preHomeAngle),
+          };
+
+          if (eased < 0.6) {
+            const trackEased = eased / 0.6;
+            const angle = fromAngle + trackEased * diffAngle;
+            newPositions[item.id] = {
+              x: Math.round((geometry.center.x + geometry.trackRadius * Math.cos(angle)) * 10) / 10,
+              y: Math.round((geometry.center.y + geometry.trackRadius * Math.sin(angle)) * 10) / 10,
+            };
+          } else {
+            const homeEased = (eased - 0.6) / 0.4;
+            newPositions[item.id] = {
+              x: Math.round((preHomeCoords.x + homeEased * (toCoords.x - preHomeCoords.x)) * 10) / 10,
+              y: Math.round((preHomeCoords.y + homeEased * (toCoords.y - preHomeCoords.y)) * 10) / 10,
+            };
+          }
+        } else {
+          newPositions[item.id] = {
+            x: Math.round((fromCoords.x + eased * (toCoords.x - fromCoords.x)) * 10) / 10,
+            y: Math.round((fromCoords.y + eased * (toCoords.y - fromCoords.y)) * 10) / 10,
+          };
+        }
+      }
+
+      setAnimatingPositions(newPositions);
+
+      if (progress < 1) {
+        animFrameId = requestAnimationFrame(animate);
+      } else {
+        setAnimatingPositions({});
+      }
+    };
+
+    animFrameId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animFrameId);
+    };
+  }, [tokens, geometry, mode, seats]);
+
   return (
     <div className="w-full flex items-center justify-center relative select-none touch-none">
       <svg
         viewBox={`0 0 ${geometry.viewBoxSize} ${geometry.viewBoxSize}`}
-        className="w-full max-w-[98vw] sm:max-w-[620px] lg:max-w-[700px] max-h-[58vh] sm:max-h-[66vh] aspect-square drop-shadow-2xl overflow-visible touch-none"
+        className="w-full max-w-[100vw] sm:max-w-[660px] lg:max-w-[740px] max-h-[62vh] sm:max-h-[68vh] aspect-square drop-shadow-2xl overflow-visible touch-none"
       >
         <defs>
           {/* Radial Board Glow */}
@@ -506,6 +628,10 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
         {/* TOKENS LAYER (Render on top of all track and home nodes) */}
         {Object.values(tokens).map(token => {
           const coords = getTokenCoordinates(token.location, token.seat, geometry);
+          const animated = animatingPositions[token.id];
+          const renderX = animated ? animated.x : coords.x;
+          const renderY = animated ? animated.y : coords.y;
+
           const colorStyles = COLOR_MAP[token.color] || COLOR_MAP.blue;
           const moves = movesByTokenId.get(token.id) || [];
           const hasAvailableMoves = moves.length > 0;
@@ -518,11 +644,7 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
           return (
             <g
               key={`token-${token.id}`}
-              style={{
-                transform: `translate(${coords.x}px, ${coords.y}px)`,
-                transition: 'transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1)',
-                willChange: 'transform',
-              }}
+              transform={`translate(${renderX}, ${renderY})`}
               className={isMyTurn ? 'cursor-pointer' : ''}
               onClick={() => {
                 if (!isMyTurn) return;
@@ -643,6 +765,53 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
               >
                 {token.tokenIndex + 1}
               </text>
+
+              {/* Quick Action Choices if selected token has multiple moves */}
+              {isSelected && isMyTurn && moves.length > 1 && (
+                <g transform="translate(0, -32)" className="select-none">
+                  {moves.map((m, idx) => {
+                    const label =
+                      m.type === 'EXIT_BASE' ? 'Départ' : m.steps > 0 ? `+${m.steps}` : `${m.steps}`;
+                    const btnWidth = Math.max(38, label.length * 8 + 16);
+                    const gap = 6;
+                    const totalW = moves.length * btnWidth + (moves.length - 1) * gap;
+                    const startX = -totalW / 2 + idx * (btnWidth + gap) + btnWidth / 2;
+                    return (
+                      <g
+                        key={`quick-choice-${idx}`}
+                        className="cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onExecuteMove(m);
+                        }}
+                      >
+                        <rect
+                          x={startX - btnWidth / 2}
+                          y={-13}
+                          width={btnWidth}
+                          height={26}
+                          rx={8}
+                          fill="#06b6d4"
+                          stroke="#ffffff"
+                          strokeWidth={1.5}
+                          filter="drop-shadow(0 4px 6px rgba(6, 182, 212, 0.5))"
+                        />
+                        <text
+                          x={startX}
+                          y={3.5}
+                          textAnchor="middle"
+                          fill="#080c14"
+                          fontSize="11"
+                          fontWeight="900"
+                          className="pointer-events-none font-display"
+                        >
+                          {label}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </g>
+              )}
             </g>
           );
         })}
