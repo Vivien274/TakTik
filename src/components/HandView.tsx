@@ -65,7 +65,6 @@ export const HandView: React.FC<HandViewProps> = ({
   onExecuteMove,
 }) => {
   const currentSeatConfig = seats.find(s => s.id === activeSeat);
-  const mySeatConfig = seats.find(s => s.id === (displayedSeat || activeSeat));
   const isMyTurn =
     isLocalGame ||
     (localPlayerRole !== null &&
@@ -148,65 +147,22 @@ export const HandView: React.FC<HandViewProps> = ({
           </div>
 
           <div className="flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              {isMyTurn ? (
-                <span className="text-xs sm:text-sm font-black text-emerald-300 tracking-wide uppercase flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  C'EST VOTRE TOUR DE JOUER !
-                </span>
-              ) : (
-                <span className="text-xs sm:text-sm font-black text-amber-300/90 uppercase tracking-wide">
-                  TOUR DU JOUEUR :
-                </span>
-              )}
-
-              <span
-                className="text-xs font-black px-2.5 py-0.5 rounded-full border shadow-sm"
-                style={{
-                  color: currentSeatConfig?.hex || '#38bdf8',
-                  borderColor: currentSeatConfig?.hex || '#38bdf8',
-                  backgroundColor: (currentSeatConfig?.hex || '#38bdf8') + '25',
-                }}
-              >
-                {currentSeatConfig?.name} • Joueur {currentSeatConfig?.humanPlayer}
+            {isMyTurn ? (
+              <span className="text-xs sm:text-sm md:text-base font-black text-emerald-300 tracking-wide uppercase flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+                C'EST VOTRE TOUR DE JOUER !
               </span>
-
-              {!isLocalGame && mySeatConfig && (
-                <span className="text-[11px] text-slate-300 font-medium">
-                  • Main : <strong style={{ color: mySeatConfig.hex }}>{mySeatConfig.name}</strong> ({cards.length} carte{cards.length > 1 ? 's' : ''})
-                </span>
-              )}
-            </div>
-
-            <div className="text-xs sm:text-sm font-semibold mt-0.5">
-              {isMyTurn ? (
-                selectedCard ? (
-                  <span className="text-cyan-200">
-                    👉 Carte <strong className="text-white underline decoration-cyan-400 font-black">{selectedCard.rank}{selectedCard.symbol}</strong> sélectionnée : touchez un pion sur le plateau.
-                  </span>
-                ) : (
-                  <span className="text-emerald-100/90 font-medium">
-                    👉 Touchez une carte ci-dessous pour choisir votre coup.
-                  </span>
-                )
-              ) : (
-                <span className="text-slate-400 font-normal">
-                  ⏳ En attente du coup de <strong className="text-white">Joueur {currentSeatConfig?.humanPlayer} ({currentSeatConfig?.name})</strong>...
-                </span>
-              )}
-            </div>
+            ) : (
+              <span className="text-xs sm:text-sm md:text-base font-black text-amber-300 tracking-wide uppercase flex items-center gap-1.5">
+                <Lock className="w-4 h-4 text-amber-400 shrink-0" />
+                Tour de l'adversaire
+              </span>
+            )}
           </div>
         </div>
 
         {/* Action Prompt / Helper */}
         <div className="flex items-center gap-2 text-xs w-full sm:w-auto justify-end">
-          {!isMyTurn && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/90 border border-slate-700 text-slate-300 font-medium">
-              <Lock className="w-3.5 h-3.5 text-amber-400" />
-              <span>Tour de l'adversaire</span>
-            </div>
-          )}
-
           {isMyTurn && selectedCard?.rank === '7' && split7Remaining < 7 && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/20 border border-indigo-500/40 text-indigo-300">
               <Split className="w-3.5 h-3.5" />
@@ -265,7 +221,7 @@ export const HandView: React.FC<HandViewProps> = ({
               key={card.id}
               className={`relative flex-shrink-0 w-20 min-w-[80px] xs:w-[88px] sm:w-28 md:w-32 h-32 xs:h-36 sm:h-42 md:h-48 rounded-2xl sm:rounded-3xl transition-all duration-200 select-none flex flex-col justify-between p-2.5 sm:p-3.5 touch-manipulation ${
                 !isMyTurn
-                  ? 'glass-card bg-slate-900/70 opacity-80 border-2 border-slate-700/60 cursor-default'
+                  ? 'grayscale opacity-40 bg-slate-950/80 border-2 border-slate-800 pointer-events-none cursor-not-allowed'
                   : isSelected
                   ? 'ring-4 ring-cyan-400 -translate-y-3 sm:-translate-y-4 shadow-[0_0_25px_rgba(34,211,238,0.7)] bg-slate-800 scale-105 z-20 cursor-pointer'
                   : hasMoves
