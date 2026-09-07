@@ -2,7 +2,7 @@ import React from 'react';
 import type { Card, GameMode, MoveOption, Seat, SeatConfig, Token } from '../game/types';
 import type { PlayerRole } from '../multiplayer/types';
 import { getLegalMovesForCard, hasAnyLegalMove } from '../game/rules';
-import { Sparkles, Trash2, ArrowRightLeft, Split, AlertCircle, Lock } from 'lucide-react';
+import { Sparkles, Trash2, ArrowRightLeft, Split, AlertCircle, Lock, Clock } from 'lucide-react';
 
 interface HandViewProps {
   cards: Card[];
@@ -58,43 +58,69 @@ export const HandView: React.FC<HandViewProps> = ({
 
   return (
     <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
-      {/* Current Turn & Status Banner */}
-      <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-3 px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl glass-panel border border-slate-800/80 mb-1.5 sm:mb-3 select-none">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div
-            className="w-3 h-3 sm:w-4 sm:h-4 rounded-full animate-pulse shadow-lg shrink-0"
-            style={{
-              backgroundColor: currentSeatConfig?.hex || '#38bdf8',
-              boxShadow: `0 0 12px ${currentSeatConfig?.glowHex || 'rgba(56, 189, 248, 0.6)'}`,
-            }}
-          />
-          <div>
+      {/* Current Turn & Status Banner - High Prominence */}
+      <div
+        className={`w-full flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4 px-3 sm:px-5 py-2 sm:py-3 rounded-xl sm:rounded-2xl border-2 mb-2 sm:mb-3 select-none transition-all ${
+          isMyTurn
+            ? 'border-emerald-400 bg-gradient-to-r from-emerald-950/95 via-slate-900/90 to-emerald-950/95 shadow-[0_0_25px_rgba(16,185,129,0.35)]'
+            : 'border-amber-500/50 bg-gradient-to-r from-slate-950/95 via-slate-900/90 to-slate-950/95 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
+        }`}
+      >
+        <div className="flex items-center gap-2.5 sm:gap-3.5 w-full sm:w-auto">
+          {isMyTurn ? (
+            <div className="relative flex h-4 w-4 sm:h-5 sm:w-5 shrink-0 items-center justify-center">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 sm:h-3.5 sm:w-3.5 bg-emerald-400 shadow-[0_0_10px_#34d399]"></span>
+            </div>
+          ) : (
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 animate-pulse shrink-0" />
+          )}
+
+          <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                Tour :
-              </span>
+              {isMyTurn ? (
+                <span className="text-xs sm:text-sm font-black text-emerald-300 tracking-wide uppercase flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  C'EST VOTRE TOUR DE JOUER !
+                </span>
+              ) : (
+                <span className="text-xs sm:text-sm font-black text-amber-300/90 uppercase tracking-wide">
+                  TOUR DU JOUEUR :
+                </span>
+              )}
+
               <span
-                className="text-xs font-black px-2 py-0.5 rounded-md border"
+                className="text-xs font-black px-2.5 py-0.5 rounded-full border shadow-sm"
                 style={{
-                  color: currentSeatConfig?.hex,
-                  borderColor: currentSeatConfig?.hex + '40',
-                  backgroundColor: currentSeatConfig?.hex + '15',
+                  color: currentSeatConfig?.hex || '#38bdf8',
+                  borderColor: currentSeatConfig?.hex || '#38bdf8',
+                  backgroundColor: (currentSeatConfig?.hex || '#38bdf8') + '25',
                 }}
               >
-                {currentSeatConfig?.name}
+                {currentSeatConfig?.name} • Joueur {currentSeatConfig?.humanPlayer}
               </span>
+
               {!isLocalGame && mySeatConfig && (
                 <span className="text-[11px] text-slate-300 font-medium">
-                  • Votre main : <strong style={{ color: mySeatConfig.hex }}>{mySeatConfig.name}</strong> ({cards.length} carte{cards.length > 1 ? 's' : ''})
+                  • Main : <strong style={{ color: mySeatConfig.hex }}>{mySeatConfig.name}</strong> ({cards.length} carte{cards.length > 1 ? 's' : ''})
                 </span>
               )}
             </div>
-            <div className="text-xs sm:text-sm font-semibold text-white">
+
+            <div className="text-xs sm:text-sm font-semibold mt-0.5">
               {isMyTurn ? (
-                <span className="text-emerald-300 font-bold">C'est votre tour de jouer !</span>
+                selectedCard ? (
+                  <span className="text-cyan-200">
+                    👉 Carte <strong className="text-white underline decoration-cyan-400 font-black">{selectedCard.rank}{selectedCard.symbol}</strong> sélectionnée : touchez un pion sur le plateau.
+                  </span>
+                ) : (
+                  <span className="text-emerald-100/90 font-medium">
+                    👉 Touchez une carte ci-dessous pour choisir votre coup.
+                  </span>
+                )
               ) : (
-                <span className="text-slate-400">
-                  En attente du coup de <strong className="text-white">Joueur {currentSeatConfig?.humanPlayer} ({currentSeatConfig?.name})</strong>...
+                <span className="text-slate-400 font-normal">
+                  ⏳ En attente du coup de <strong className="text-white">Joueur {currentSeatConfig?.humanPlayer} ({currentSeatConfig?.name})</strong>...
                 </span>
               )}
             </div>
@@ -102,11 +128,11 @@ export const HandView: React.FC<HandViewProps> = ({
         </div>
 
         {/* Action Prompt / Helper */}
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-2 text-xs w-full sm:w-auto justify-end">
           {!isMyTurn && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-400">
-              <Lock className="w-3.5 h-3.5 text-slate-500" />
-              <span>Contrôle verrouillé pendant le tour adverse</span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/90 border border-slate-700 text-slate-300 font-medium">
+              <Lock className="w-3.5 h-3.5 text-amber-400" />
+              <span>Tour de l'adversaire</span>
             </div>
           )}
 
@@ -129,12 +155,28 @@ export const HandView: React.FC<HandViewProps> = ({
           )}
 
           {isMyTurn && !anyMovePossible && cards.length > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/20 border border-rose-500/40 text-rose-300">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/20 border border-rose-500/40 text-rose-300 font-semibold animate-pulse">
               <AlertCircle className="w-3.5 h-3.5" />
-              <span>Aucun coup valide possible ! Défaussez une carte pour passer.</span>
+              <span>Aucun coup valide ! Défaussez une carte.</span>
             </div>
           )}
         </div>
+      </div>
+
+      {/* Cards Row Header */}
+      <div className="w-full flex items-center justify-between px-2 mb-1 select-none">
+        <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+          Vos Cartes ({cards.length})
+        </span>
+        {isMyTurn ? (
+          <span className="text-[11px] sm:text-xs font-bold text-emerald-400 flex items-center gap-1 animate-pulse">
+            ★ À VOUS DE JOUER ★
+          </span>
+        ) : (
+          <span className="text-[11px] sm:text-xs font-medium text-slate-500 italic">
+            Cartes verrouillées jusqu'à votre tour
+          </span>
+        )}
       </div>
 
       {/* Cards Row: Always rendered Face-Up with full values */}

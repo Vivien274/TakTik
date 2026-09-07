@@ -75,6 +75,9 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
     [mode]
   );
 
+  const activeSeatConfig = seats.find(s => s.id === activeSeat);
+  const activeSeatColor = COLOR_MAP[activeSeatConfig?.color || 'blue'] || COLOR_MAP.blue;
+
   // Map of tokenId -> list of moves available for that token
   const movesByTokenId = React.useMemo(() => {
     const map = new Map<string, MoveOption[]>();
@@ -370,30 +373,104 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
           />
         </g>
 
-        {/* Center Mode Title */}
-        <text
-          x={geometry.center.x}
-          y={geometry.center.y - 8}
-          textAnchor="middle"
-          fill="#64748b"
-          fontSize="14"
-          fontWeight="bold"
-          letterSpacing="4"
-          className="font-display uppercase"
-        >
-          {mode === 'PURE_DUEL' ? 'PURE DUEL' : 'CLASSIQUE'}
-        </text>
-        <text
-          x={geometry.center.x}
-          y={geometry.center.y + 12}
-          textAnchor="middle"
-          fill="#475569"
-          fontSize="10"
-          letterSpacing="2"
-          className="uppercase"
-        >
-          {mode === 'PURE_DUEL' ? '32 Cases • 1v1' : '64 Cases • 4 Sièges'}
-        </text>
+        {/* Center Turn Hub & Mode Details */}
+        <g>
+          {/* Rotating dashed outer aura */}
+          <circle
+            cx={geometry.center.x}
+            cy={geometry.center.y}
+            r="82"
+            fill="none"
+            stroke={activeSeatColor.stroke}
+            strokeWidth="1.5"
+            strokeDasharray="6 6"
+            strokeOpacity="0.45"
+          >
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from={`0 ${geometry.center.x} ${geometry.center.y}`}
+              to={`360 ${geometry.center.x} ${geometry.center.y}`}
+              dur="24s"
+              repeatCount="indefinite"
+            />
+          </circle>
+
+          {/* Glowing Center Hub Disc */}
+          <circle
+            cx={geometry.center.x}
+            cy={geometry.center.y}
+            r="68"
+            fill="#080e1b"
+            fillOpacity="0.96"
+            stroke={activeSeatColor.stroke}
+            strokeWidth={isMyTurn ? "3.5" : "2.5"}
+            strokeOpacity="0.9"
+            filter="drop-shadow(0 0 16px rgba(0,0,0,0.8))"
+          >
+            <animate
+              attributeName="stroke-width"
+              values={isMyTurn ? "3;5;3" : "2;3.5;2"}
+              dur="2s"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="stroke-opacity"
+              values="0.6;1;0.6"
+              dur="2s"
+              repeatCount="indefinite"
+            />
+          </circle>
+
+          {/* Center Hub Text */}
+          <text
+            x={geometry.center.x}
+            y={geometry.center.y - 23}
+            textAnchor="middle"
+            fill="#94a3b8"
+            fontSize="9"
+            fontWeight="900"
+            letterSpacing="2.5"
+            className="uppercase font-display"
+          >
+            AU TOUR DE
+          </text>
+          <text
+            x={geometry.center.x}
+            y={geometry.center.y + 2}
+            textAnchor="middle"
+            fill={activeSeatColor.stroke}
+            fontSize="17"
+            fontWeight="900"
+            letterSpacing="1.5"
+            className="font-display uppercase"
+          >
+            {activeSeatConfig?.name || activeSeat}
+          </text>
+          <text
+            x={geometry.center.x}
+            y={geometry.center.y + 23}
+            textAnchor="middle"
+            fill={isMyTurn ? '#34d399' : '#cbd5e1'}
+            fontSize="10"
+            fontWeight="900"
+            letterSpacing="1"
+            className="uppercase font-display"
+          >
+            {isMyTurn ? '★ C’EST À VOUS ! ★' : `JOUEUR ${activeSeatConfig?.humanPlayer}`}
+          </text>
+          <text
+            x={geometry.center.x}
+            y={geometry.center.y + 38}
+            textAnchor="middle"
+            fill="#64748b"
+            fontSize="7"
+            letterSpacing="1.5"
+            className="uppercase"
+          >
+            {mode === 'PURE_DUEL' ? 'DUEL • 32 CASES' : 'CLASSIQUE • 64 CASES'}
+          </text>
+        </g>
 
         {/* HOME RUNWAYS FOR EACH SEAT */}
         {seats.map(seat => {
@@ -579,6 +656,29 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
 
           return (
             <g key={`base-pod-${seat.id}`}>
+              {/* Pulsing active halo behind the pod */}
+              {isCurrentActive && (
+                <rect
+                  x={minX - 4}
+                  y={minY - 4}
+                  width={width + 8}
+                  height={height + 8}
+                  rx="26"
+                  fill="none"
+                  stroke={colorStyles.stroke}
+                  strokeWidth="3.5"
+                  strokeDasharray="8 6"
+                  strokeOpacity="0.8"
+                >
+                  <animate
+                    attributeName="stroke-opacity"
+                    values="0.3;1;0.3"
+                    dur="1.8s"
+                    repeatCount="indefinite"
+                  />
+                </rect>
+              )}
+
               {/* Pod container panel (Réserve extérieure au plateau) */}
               <rect
                 x={minX}
@@ -586,26 +686,55 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                 width={width}
                 height={height}
                 rx="22"
-                fill="#070b14"
+                fill={isCurrentActive ? '#0c1322' : '#070b14'}
                 fillOpacity="0.95"
                 stroke={isCurrentActive ? colorStyles.stroke : '#1e293b'}
-                strokeWidth={isCurrentActive ? 2.5 : 1.5}
+                strokeWidth={isCurrentActive ? 3 : 1.5}
                 strokeOpacity={isCurrentActive ? 1 : 0.6}
               />
 
               {/* Pod Seat Title */}
               <text
                 x={minX + width / 2}
-                y={minY - 8}
+                y={minY - 10}
                 textAnchor="middle"
                 fill={colorStyles.stroke}
-                fontSize="10"
+                fontSize="11"
                 fontWeight="900"
                 letterSpacing="1.2"
                 className="font-display"
               >
                 RÉSERVE • {seat.name.toUpperCase()}
               </text>
+
+              {/* Active Player Floating Indicator Pill */}
+              {isCurrentActive && (
+                <g>
+                  <rect
+                    x={minX + width / 2 - 58}
+                    y={maxY + 8}
+                    width="116"
+                    height="19"
+                    rx="9.5"
+                    fill={colorStyles.stroke}
+                    fillOpacity="0.25"
+                    stroke={colorStyles.stroke}
+                    strokeWidth="1.5"
+                  />
+                  <text
+                    x={minX + width / 2}
+                    y={maxY + 21.5}
+                    textAnchor="middle"
+                    fill="#ffffff"
+                    fontSize="9.5"
+                    fontWeight="900"
+                    letterSpacing="1.2"
+                    className="font-display uppercase"
+                  >
+                    ▶ TOUR ACTIF ◀
+                  </text>
+                </g>
+              )}
 
               {/* 4 Base Slots */}
               {basePoints.map((point, slotIndex) => {
@@ -617,8 +746,8 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                     r="17"
                     fill="#080c14"
                     stroke={colorStyles.stroke}
-                    strokeWidth="1.5"
-                    strokeOpacity="0.4"
+                    strokeWidth={isCurrentActive ? '2' : '1.5'}
+                    strokeOpacity={isCurrentActive ? '0.7' : '0.4'}
                   />
                 );
               })}
