@@ -303,12 +303,25 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                         cx={point.x}
                         cy={point.y}
                         r="22"
-                        fill="none"
+                        fill="#22d3ee"
+                        fillOpacity="0.25"
                         stroke="#22d3ee"
-                        strokeWidth="3"
+                        strokeWidth="2.5"
                         filter="url(#glow-target)"
-                        className="animate-ping opacity-75 origin-center"
-                      />
+                      >
+                        <animate
+                          attributeName="r"
+                          values="18;23;18"
+                          dur="1.2s"
+                          repeatCount="indefinite"
+                        />
+                        <animate
+                          attributeName="stroke-opacity"
+                          values="1;0.4;1"
+                          dur="1.2s"
+                          repeatCount="indefinite"
+                        />
+                      </circle>
                     )}
 
                     {/* Slot socket */}
@@ -365,12 +378,25 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                   cx={node.x}
                   cy={node.y}
                   r="20"
-                  fill="none"
+                  fill="#22d3ee"
+                  fillOpacity="0.25"
                   stroke="#22d3ee"
-                  strokeWidth="3"
+                  strokeWidth="2.5"
                   filter="url(#glow-target)"
-                  className="animate-ping opacity-80"
-                />
+                >
+                  <animate
+                    attributeName="r"
+                    values="16;22;16"
+                    dur="1.2s"
+                    repeatCount="indefinite"
+                  />
+                  <animate
+                    attributeName="stroke-opacity"
+                    values="1;0.4;1"
+                    dur="1.2s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
               )}
 
               {/* Base node socket */}
@@ -512,15 +538,28 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                 <circle
                   cx={0}
                   cy={0}
-                  r="23"
+                  r="22"
                   fill="none"
                   stroke="#ffffff"
                   strokeWidth="2.5"
                   filter="url(#glow-target)"
-                />
+                >
+                  <animate
+                    attributeName="r"
+                    values="20;23;20"
+                    dur="1.2s"
+                    repeatCount="indefinite"
+                  />
+                  <animate
+                    attributeName="stroke-opacity"
+                    values="1;0.5;1"
+                    dur="1.2s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
               )}
 
-              {/* Has available moves pulse ring */}
+              {/* Has available moves rotating dash ring - pure SVG stroke-dashoffset, no CSS transform displacement */}
               {hasAvailableMoves && !isSelected && (
                 <circle
                   cx={0}
@@ -529,9 +568,17 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                   fill="none"
                   stroke={colorStyles.stroke}
                   strokeWidth="2"
-                  strokeDasharray="4 3"
-                  className="animate-spin opacity-70 origin-center"
-                />
+                  strokeDasharray="6 4"
+                  opacity="0.85"
+                >
+                  <animate
+                    attributeName="stroke-dashoffset"
+                    from="0"
+                    to="20"
+                    dur="1.5s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
               )}
 
               {/* Jack Target swap indicator */}
@@ -543,9 +590,17 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                   fill="none"
                   stroke="#facc15"
                   strokeWidth="2"
-                  strokeDasharray="3 3"
-                  className="animate-pulse"
-                />
+                  strokeDasharray="4 4"
+                  opacity="0.9"
+                >
+                  <animate
+                    attributeName="stroke-dashoffset"
+                    from="0"
+                    to="16"
+                    dur="1.5s"
+                    repeatCount="indefinite"
+                  />
+                </circle>
               )}
 
               {/* Token Main Body with 3D gradient */}
