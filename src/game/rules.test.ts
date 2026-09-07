@@ -200,10 +200,10 @@ console.log('🧪 Starting Taktik Rule Engine Test Suite...\n');
   console.log('✅ Test 8 Passed: WePlay Ace provides +11 option');
 }
 
-// Test 9: WePlay Card 5 on any token (opponent included)
+// Test 9: WePlay Card 5 on any token (opponent included when not on pieu)
 {
   const tokens = createInitialTokens('PURE_DUEL');
-  tokens['token-P2-0'].location = { type: 'TRACK', index: 16 };
+  tokens['token-P2-0'].location = { type: 'TRACK', index: 18 }; // Index 18 is on track, not on pieu (which is 16)
   const card5: Card = {
     id: 'test-card-5',
     suit: 'CLUBS',
@@ -215,9 +215,9 @@ console.log('🧪 Starting Taktik Rule Engine Test Suite...\n');
   };
   const moves = getLegalMovesForCard(card5, 'P1', 'PURE_DUEL', tokens);
   const moveP2 = moves.find(m => m.tokenId === 'token-P2-0');
-  assert(moveP2 !== undefined, 'Card 5 must be able to move opponent token');
-  assert.strictEqual(moveP2.to.index, (16 + 5) % 32);
-  console.log('✅ Test 9 Passed: WePlay Card 5 can move opponent token');
+  assert(moveP2 !== undefined, 'Card 5 must be able to move opponent token on track');
+  assert.strictEqual(moveP2.to.index, (18 + 5) % 32);
+  console.log('✅ Test 9 Passed: WePlay Card 5 can move opponent token on track');
 }
 
 // Test 10: Card 5 pushing opponent 1 space from their home does NOT enter home (bypasses garage)
@@ -266,4 +266,47 @@ console.log('🧪 Starting Taktik Rule Engine Test Suite...\n');
   console.log('✅ Test 11 Passed: Exact landing captures the target token');
 }
 
-console.log('\n🎉 ALL 11 TEST SUITES PASSED CLEANLY!\n');
+// Test 12: Règle du Pieu (Immunité absolue du pion sur sa case départ contre le 5 et le Valet adverse)
+{
+  const tokens = createInitialTokens('PURE_DUEL');
+  // P2 est sur son pieu (case de départ = index 16 en Pure Duel)
+  tokens['token-P2-0'].location = { type: 'TRACK', index: 16 };
+  tokens['token-P1-0'].location = { type: 'TRACK', index: 4 };
+
+  const card5: Card = {
+    id: 'test-card-5-pieu',
+    suit: 'CLUBS',
+    rank: '5',
+    value: 5,
+    description: 'Move any token +5',
+    symbol: '♣',
+    isRed: false,
+  };
+  const moves5 = getLegalMovesForCard(card5, 'P1', 'PURE_DUEL', tokens);
+  const moveP2With5 = moves5.find(m => m.tokenId === 'token-P2-0');
+  assert.strictEqual(
+    moveP2With5,
+    undefined,
+    'Un joueur adverse avec la carte 5 NE PEUT PAS déplacer un pion adverse au pieu'
+  );
+
+  const cardJack: Card = {
+    id: 'test-card-jack-pieu',
+    suit: 'SPADES',
+    rank: 'J',
+    value: 0,
+    description: 'Jack Swap',
+    symbol: '♠',
+    isRed: false,
+  };
+  const movesJack = getLegalMovesForCard(cardJack, 'P1', 'PURE_DUEL', tokens);
+  const swapWithPieu = movesJack.find(m => m.secondaryTokenId === 'token-P2-0');
+  assert.strictEqual(
+    swapWithPieu,
+    undefined,
+    'Un joueur adverse avec le Valet NE PEUT PAS échanger un pion adverse au pieu'
+  );
+  console.log('✅ Test 12 Passed: Règle du Pieu validée (intouchable au 5 et au Valet adverse)');
+}
+
+console.log('\n🎉 ALL 12 TEST SUITES PASSED CLEANLY!\n');

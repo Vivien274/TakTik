@@ -33,9 +33,9 @@ export function getTrackAngle(index: number, mode: GameMode): number {
 }
 
 export function getBoardGeometry(mode: GameMode): BoardGeometryConfig {
-  const viewBoxSize = 900;
-  const center: Point = { x: 450, y: 450 };
-  const trackRadius = 355;
+  const viewBoxSize = 960;
+  const center: Point = { x: 480, y: 480 };
+  const trackRadius = 300;
 
   if (mode === 'PURE_DUEL') {
     const totalTrackNodes = 32;
@@ -79,19 +79,18 @@ export function getBoardGeometry(mode: GameMode): BoardGeometryConfig {
     }
 
     // Home slots: 4 slots running radially inward toward center
-    // P1 Home runs from bottom (y=780) towards center (y=450)
     const homeSlots: Record<Seat, Point[]> = {
       P1: [
-        { x: center.x, y: center.y + trackRadius - 55 },
-        { x: center.x, y: center.y + trackRadius - 105 },
-        { x: center.x, y: center.y + trackRadius - 155 },
-        { x: center.x, y: center.y + trackRadius - 205 },
+        { x: center.x, y: center.y + trackRadius - 50 },
+        { x: center.x, y: center.y + trackRadius - 95 },
+        { x: center.x, y: center.y + trackRadius - 140 },
+        { x: center.x, y: center.y + trackRadius - 185 },
       ],
       P2: [
-        { x: center.x, y: center.y - trackRadius + 55 },
-        { x: center.x, y: center.y - trackRadius + 105 },
-        { x: center.x, y: center.y - trackRadius + 155 },
-        { x: center.x, y: center.y - trackRadius + 205 },
+        { x: center.x, y: center.y - trackRadius + 50 },
+        { x: center.x, y: center.y - trackRadius + 95 },
+        { x: center.x, y: center.y - trackRadius + 140 },
+        { x: center.x, y: center.y - trackRadius + 185 },
       ],
       NORTH: [],
       EAST: [],
@@ -99,21 +98,21 @@ export function getBoardGeometry(mode: GameMode): BoardGeometryConfig {
       WEST: [],
     };
 
-    // Base pods: 4 slots in the corners outside the circular board
-    // P1 Base reserve pod in bottom-right corner (outside board disc)
-    // P2 Base reserve pod in top-left corner (outside board disc)
+    // Base pods en ligne droite près du pieu (case de départ), bien éloignées du plateau :
+    // P1 : En ligne horizontale en bas près du pieu P1 (x=480, y=780)
+    // P2 : En ligne horizontale en haut près du pieu P2 (x=480, y=180)
     const baseSlots: Record<Seat, Point[]> = {
       P1: [
-        { x: 735, y: 735 },
-        { x: 785, y: 735 },
-        { x: 735, y: 785 },
-        { x: 785, y: 785 },
+        { x: 375, y: 890 },
+        { x: 445, y: 890 },
+        { x: 515, y: 890 },
+        { x: 585, y: 890 },
       ],
       P2: [
-        { x: 115, y: 115 },
-        { x: 165, y: 115 },
-        { x: 115, y: 165 },
-        { x: 165, y: 165 },
+        { x: 375, y: 70 },
+        { x: 445, y: 70 },
+        { x: 515, y: 70 },
+        { x: 585, y: 70 },
       ],
       NORTH: [],
       EAST: [],
@@ -208,35 +207,35 @@ export function getBoardGeometry(mode: GameMode): BoardGeometryConfig {
     P2: [],
   };
 
-  // Base reserve pods in the 4 corners (completely outside the circular board)
-  // North: Top-Left corner
-  // East: Top-Right corner
-  // South: Bottom-Right corner
-  // West: Bottom-Left corner
+  // Base reserve pods en ligne droite près de chaque pieu (départ), bien éloignées du plateau :
+  // North: En ligne horizontale en haut près du pieu Nord (x=480, y=180)
+  // South: En ligne horizontale en bas près du pieu Sud (x=480, y=780)
+  // East: En ligne verticale à droite près du pieu Est (x=780, y=480)
+  // West: En ligne verticale à gauche près du pieu Ouest (x=180, y=480)
   const baseSlots: Record<Seat, Point[]> = {
     NORTH: [
-      { x: 115, y: 115 },
-      { x: 165, y: 115 },
-      { x: 115, y: 165 },
-      { x: 165, y: 165 },
+      { x: 375, y: 70 },
+      { x: 445, y: 70 },
+      { x: 515, y: 70 },
+      { x: 585, y: 70 },
     ],
     EAST: [
-      { x: 735, y: 115 },
-      { x: 785, y: 115 },
-      { x: 735, y: 165 },
-      { x: 785, y: 165 },
+      { x: 890, y: 375 },
+      { x: 890, y: 445 },
+      { x: 890, y: 515 },
+      { x: 890, y: 585 },
     ],
     SOUTH: [
-      { x: 735, y: 735 },
-      { x: 785, y: 735 },
-      { x: 735, y: 785 },
-      { x: 785, y: 785 },
+      { x: 375, y: 890 },
+      { x: 445, y: 890 },
+      { x: 515, y: 890 },
+      { x: 585, y: 890 },
     ],
     WEST: [
-      { x: 115, y: 735 },
-      { x: 165, y: 735 },
-      { x: 115, y: 785 },
-      { x: 165, y: 785 },
+      { x: 70, y: 375 },
+      { x: 70, y: 445 },
+      { x: 70, y: 515 },
+      { x: 70, y: 585 },
     ],
     P1: [],
     P2: [],

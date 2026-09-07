@@ -13,6 +13,7 @@ import {
   getTokenCoordinates,
   getTrackAngle,
 } from '../game/boardGeometry';
+import { isTokenOnPieu } from '../game/rules';
 
 interface GameBoardSVGProps {
   mode: GameMode;
@@ -265,29 +266,33 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
             <stop offset="100%" stopColor="#06080e" stopOpacity="1" />
           </radialGradient>
 
-          {/* Token 3D Gradients */}
-          <radialGradient id="token-grad-blue" cx="35%" cy="35%" r="65%">
-            <stop offset="0%" stopColor="#7dd3fc" />
-            <stop offset="40%" stopColor="#0284c7" />
-            <stop offset="100%" stopColor="#034d75" />
+          {/* Token 3D Glossy Sphere Gradients (Style tactile Ludo / WePlay) */}
+          <radialGradient id="token-grad-blue" cx="32%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="#e0f2fe" />
+            <stop offset="25%" stopColor="#38bdf8" />
+            <stop offset="65%" stopColor="#0284c7" />
+            <stop offset="100%" stopColor="#082f49" />
           </radialGradient>
 
-          <radialGradient id="token-grad-red" cx="35%" cy="35%" r="65%">
-            <stop offset="0%" stopColor="#fca5a5" />
-            <stop offset="40%" stopColor="#dc2626" />
-            <stop offset="100%" stopColor="#7f1d1d" />
+          <radialGradient id="token-grad-red" cx="32%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="#ffe4e6" />
+            <stop offset="25%" stopColor="#fb7185" />
+            <stop offset="65%" stopColor="#e11d48" />
+            <stop offset="100%" stopColor="#4c0519" />
           </radialGradient>
 
-          <radialGradient id="token-grad-green" cx="35%" cy="35%" r="65%">
-            <stop offset="0%" stopColor="#86efac" />
-            <stop offset="40%" stopColor="#16a34a" />
-            <stop offset="100%" stopColor="#14532d" />
+          <radialGradient id="token-grad-green" cx="32%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="#dcfce7" />
+            <stop offset="25%" stopColor="#4ade80" />
+            <stop offset="65%" stopColor="#16a34a" />
+            <stop offset="100%" stopColor="#052e16" />
           </radialGradient>
 
-          <radialGradient id="token-grad-yellow" cx="35%" cy="35%" r="65%">
-            <stop offset="0%" stopColor="#fef08a" />
-            <stop offset="40%" stopColor="#ca8a04" />
-            <stop offset="100%" stopColor="#713f12" />
+          <radialGradient id="token-grad-yellow" cx="32%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="#fef9c3" />
+            <stop offset="25%" stopColor="#fde047" />
+            <stop offset="65%" stopColor="#ca8a04" />
+            <stop offset="100%" stopColor="#422006" />
           </radialGradient>
 
           {/* Filters for neon glows */}
@@ -305,13 +310,19 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
+
+          {/* Drop shadow filter for 3D tactile tokens */}
+          <filter id="token-3d-shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#000000" floodOpacity="0.8" />
+            <feDropShadow dx="0" dy="1" stdDeviation="1.5" floodColor="#000000" floodOpacity="0.6" />
+          </filter>
         </defs>
 
-        {/* Central Circular Board Plate (Le plateau de jeu en cercle distinct) */}
+        {/* Central Circular Board Plate (Le plateau de jeu en cercle distinct, sans chevauchement avec les réserves) */}
         <circle
           cx={geometry.center.x}
           cy={geometry.center.y}
-          r="360"
+          r="345"
           fill="url(#board-bg)"
           stroke="#334155"
           strokeWidth="3"
@@ -319,7 +330,7 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
         <circle
           cx={geometry.center.x}
           cy={geometry.center.y}
-          r="356"
+          r="340"
           fill="none"
           stroke="#1e293b"
           strokeWidth="1.5"
@@ -631,7 +642,7 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
               <circle
                 cx={node.x}
                 cy={node.y}
-                r={node.isStartNode ? 18 : 14}
+                r={node.isStartNode ? 20 : 15}
                 fill={node.isStartNode ? '#1e293b' : '#0f172a'}
                 stroke={
                   isTarget
@@ -644,14 +655,17 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                 strokeDasharray={node.isPreHomeNode && !isTarget ? '3 3' : undefined}
               />
 
-              {/* Start node accent dot / icon */}
+              {/* Start node (Pieu) sanctuary emblem */}
               {node.isStartNode && ownerStyles && (
                 <circle
                   cx={node.x}
                   cy={node.y}
-                  r="6"
-                  fill={ownerStyles.stroke}
-                  opacity="0.8"
+                  r="7"
+                  fill="none"
+                  stroke={ownerStyles.stroke}
+                  strokeWidth="2"
+                  strokeDasharray="3 2"
+                  opacity="0.9"
                 />
               )}
             </g>
@@ -762,8 +776,8 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                     key={`base-slot-${seat.id}-${slotIndex}`}
                     cx={point.x}
                     cy={point.y}
-                    r="17"
-                    fill="#080c14"
+                    r="18.5"
+                    fill="#0b0f19"
                     stroke={colorStyles.stroke}
                     strokeWidth={isCurrentActive ? '2' : '1.5'}
                     strokeOpacity={isCurrentActive ? '0.7' : '0.4'}
@@ -785,6 +799,7 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
           const moves = movesByTokenId.get(token.id) || [];
           const hasAvailableMoves = moves.length > 0;
           const isSelected = token.id === selectedTokenId;
+          const isPieu = isTokenOnPieu(token, mode);
           const isJackTargetSelectable =
             Boolean(jackFirstSelectedTokenId) &&
             token.location.type === 'TRACK' &&
@@ -833,12 +848,51 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                 }
               }}
             >
+              {/* Golden Pieu Sanctuary Ring (Protection absolue contre cartes adverses) */}
+              {isPieu && (
+                <g>
+                  <circle
+                    cx={0}
+                    cy={0}
+                    r="25"
+                    fill="none"
+                    stroke="#facc15"
+                    strokeWidth="2.5"
+                    strokeDasharray="5 4"
+                    opacity="0.95"
+                  >
+                    <animate
+                      attributeName="stroke-dashoffset"
+                      from="0"
+                      to="18"
+                      dur="2.5s"
+                      repeatCount="indefinite"
+                    />
+                  </circle>
+                  {/* Golden Pieu badge */}
+                  <g transform="translate(13, -13)">
+                    <circle cx={0} cy={0} r="7.5" fill="#facc15" stroke="#0f172a" strokeWidth="1.5" />
+                    <text
+                      x={0}
+                      y={2.8}
+                      textAnchor="middle"
+                      fill="#0f172a"
+                      fontSize="8"
+                      fontWeight="900"
+                      className="font-display pointer-events-none"
+                    >
+                      ★
+                    </text>
+                  </g>
+                </g>
+              )}
+
               {/* Selected / Active Aura */}
               {isSelected && (
                 <circle
                   cx={0}
                   cy={0}
-                  r="22"
+                  r="24"
                   fill="none"
                   stroke="#ffffff"
                   strokeWidth="2.5"
@@ -846,7 +900,7 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                 >
                   <animate
                     attributeName="r"
-                    values="20;23;20"
+                    values="22;25;22"
                     dur="1.2s"
                     repeatCount="indefinite"
                   />
@@ -859,17 +913,17 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                 </circle>
               )}
 
-              {/* Has available moves rotating dash ring - pure SVG stroke-dashoffset, no CSS transform displacement */}
+              {/* Has available moves rotating dash ring - pure SVG stroke-dashoffset */}
               {hasAvailableMoves && !isSelected && (
                 <circle
                   cx={0}
                   cy={0}
-                  r="20"
+                  r="22"
                   fill="none"
                   stroke={colorStyles.stroke}
-                  strokeWidth="2"
+                  strokeWidth="2.5"
                   strokeDasharray="6 4"
-                  opacity="0.85"
+                  opacity="0.9"
                 >
                   <animate
                     attributeName="stroke-dashoffset"
@@ -886,10 +940,10 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                 <circle
                   cx={0}
                   cy={0}
-                  r="22"
+                  r="24"
                   fill="none"
                   stroke="#facc15"
-                  strokeWidth="2"
+                  strokeWidth="2.5"
                   strokeDasharray="4 4"
                   opacity="0.9"
                 >
@@ -903,25 +957,57 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                 </circle>
               )}
 
-              {/* Token Main Body with 3D gradient */}
+              {/* 3D Glossy Tactile Pawn (Style WePlay / Ludo de référence) */}
+              {/* Outer Beveled Dome Body with deep drop-shadow */}
               <circle
                 cx={0}
                 cy={0}
-                r="17"
+                r="18.5"
                 fill={colorStyles.fill}
                 stroke={isSelected ? '#ffffff' : colorStyles.stroke}
-                strokeWidth={isSelected ? 2.5 : 1.5}
-                filter={`drop-shadow(0 4px 6px ${colorStyles.glow})`}
+                strokeWidth={isSelected ? 3 : 2}
+                filter="url(#token-3d-shadow)"
               />
 
-              {/* Specular 3D highlight */}
+              {/* Concentric Step / Inner Rim */}
+              <circle
+                cx={0}
+                cy={0}
+                r="15.5"
+                fill="none"
+                stroke="#ffffff"
+                strokeWidth="0.8"
+                strokeOpacity="0.35"
+              />
+
+              {/* Bottom reflection crescent */}
+              <path
+                d="M -11,8 A 14 14 0 0 0 11,8"
+                fill="none"
+                stroke="#ffffff"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeOpacity="0.35"
+              />
+
+              {/* Primary Top-Left Specular Gloss */}
               <ellipse
-                cx={-5}
-                cy={-5}
+                cx={-5.5}
+                cy={-5.5}
                 rx="6"
-                ry="3.5"
+                ry="3.2"
+                transform="rotate(-25 -5.5 -5.5)"
                 fill="#ffffff"
-                fillOpacity="0.4"
+                fillOpacity="0.7"
+              />
+
+              {/* Secondary Specular Gleam */}
+              <circle
+                cx={-8.5}
+                cy={-8.5}
+                r="1.5"
+                fill="#ffffff"
+                fillOpacity="0.85"
               />
 
               {/* Token Number/Letter Label */}
@@ -930,9 +1016,9 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                 y={4}
                 textAnchor="middle"
                 fill="#ffffff"
-                fontSize="10.5"
-                fontWeight="bold"
-                className="pointer-events-none drop-shadow-sm font-sans"
+                fontSize="11"
+                fontWeight="900"
+                className="pointer-events-none font-display drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]"
               >
                 {token.tokenIndex + 1}
               </text>

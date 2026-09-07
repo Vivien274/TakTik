@@ -334,7 +334,48 @@ export function App() {
   const handleSelectCard = (cardId: string) => {
     if (!isMyTurn) return;
 
+    // Deuxième clic sur la carte relevée / sélectionnée :
+    // Si un seul pion peut être joué, la jouer directement sans avoir à toucher le pion !
     if (gameState.selectedCardId === cardId) {
+      const card = currentHand.find(c => c.id === cardId);
+      if (card && gameState.mode) {
+        const moves = getLegalMovesForCard(
+          card,
+          gameState.activeSeat,
+          gameState.mode,
+          gameState.tokens,
+          gameState.split7Remaining
+        );
+
+        const uniqueTokens = Array.from(new Set(moves.map(m => m.tokenId)));
+
+        // Cas 1 : Un seul pion jouable avec cette carte
+        if (uniqueTokens.length === 1) {
+          const tokenMoves = moves.filter(m => m.tokenId === uniqueTokens[0]);
+          if (tokenMoves.length === 1) {
+            handleExecuteMove(tokenMoves[0]);
+            return;
+          }
+          const exitBase = tokenMoves.find(m => m.type === 'EXIT_BASE');
+          if (exitBase) {
+            handleExecuteMove(exitBase);
+            return;
+          }
+          handleExecuteMove(tokenMoves[0]);
+          return;
+        }
+
+        // Cas 2 : Un pion spécifique était déjà sélectionné
+        if (gameState.selectedTokenId) {
+          const tokenMoves = moves.filter(m => m.tokenId === gameState.selectedTokenId);
+          if (tokenMoves.length >= 1) {
+            handleExecuteMove(tokenMoves[0]);
+            return;
+          }
+        }
+      }
+
+      // Si plusieurs pions possibles et aucun ciblé, désélectionner la carte
       setGameState(prev => ({
         ...prev,
         selectedCardId: null,
@@ -344,7 +385,7 @@ export function App() {
       return;
     }
 
-    // Auto-sélection si un seul pion peut être déplacé
+    // Premier clic : sélection de la carte et auto-sélection si un seul pion peut être déplacé
     const card = currentHand.find(c => c.id === cardId);
     let autoTokenId: string | null = null;
     if (card && gameState.mode) {

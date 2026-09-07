@@ -154,6 +154,21 @@ export function findTokenAtLocation(
   });
 }
 
+/**
+ * Vérifie si un pion est sur sa case de départ ("au pieu").
+ * Dans les règles authentiques du Jackaroo / WePlay :
+ * Un pion sur son pieu est protégé et intouchable par les adversaires :
+ * - Un adversaire ne peut PAS le déplacer avec une carte 5
+ * - Un adversaire ne peut PAS l'échanger avec un Valet (Jack)
+ * - Un adversaire ne peut PAS l'éliminer / atterrir dessus
+ */
+export function isTokenOnPieu(token: Token, mode: GameMode): boolean {
+  if (token.location.type !== 'TRACK') return false;
+  const configs = getSeatConfigs(mode);
+  const seatConfig = configs.find(s => s.id === token.seat);
+  return seatConfig ? token.location.index === seatConfig.startIndex : false;
+}
+
 export function calculateForwardDestination(
   startLocation: TokenLocation,
   steps: number,
@@ -281,6 +296,10 @@ export function getLegalMovesForCard(
     for (const friendly of trackEligibleTokens) {
       for (const other of allTrackTokens) {
         if (friendly.id === other.id) continue;
+        const isOpponent = other.seat !== activeSeat && other.seat !== seatConfig.partnerSeat;
+        // Un pion adverse au pieu (sur sa case de départ) ne peut pas être échangé avec un Valet
+        if (isOpponent && isTokenOnPieu(other, mode)) continue;
+
         moves.push({
           type: 'SWAP_JACK',
           cardId: card.id,
@@ -304,6 +323,14 @@ export function getLegalMovesForCard(
       const { destination, valid } = calculateBackwardDestination(token.location, 4, mode);
       if (valid) {
         const occupyingToken = findTokenAtLocation(destination, undefined, tokens);
+        const isOpponentOnPieu =
+          occupyingToken &&
+          occupyingToken.seat !== activeSeat &&
+          occupyingToken.seat !== seatConfig.partnerSeat &&
+          isTokenOnPieu(occupyingToken, mode);
+        // Un pion adverse au pieu est intouchable (ne peut pas être capturé)
+        if (isOpponentOnPieu) continue;
+
         moves.push({
           type: 'BACKWARD_4',
           cardId: card.id,
@@ -340,6 +367,13 @@ export function getLegalMovesForCard(
             ? findTokenAtLocation(destination, undefined, tokens)
             : undefined;
 
+          const isOpponentOnPieu =
+            occupyingToken &&
+            occupyingToken.seat !== activeSeat &&
+            occupyingToken.seat !== seatConfig.partnerSeat &&
+            isTokenOnPieu(occupyingToken, mode);
+          if (isOpponentOnPieu) continue;
+
           moves.push({
             type: 'SPLIT_7',
             cardId: card.id,
@@ -362,10 +396,16 @@ export function getLegalMovesForCard(
   // Special WePlay Rule for Card 5: can move ANY token on the track (friendly, partner, or opponent)!
   // When pushing an OPPONENT token, allowHomeEntry is FALSE: it pushes the opponent forward along the track,
   // bypassing their garage so they miss their home entrance!
+  // REGLE DU PIEU : Un joueur adverse NE PEUT PAS bouger un pion adverse s'il est au pieu (sur sa case de départ) !
   if (card.rank === '5') {
     const allTrackTokens = Object.values(tokens).filter(t => t.location.type === 'TRACK');
     for (const token of allTrackTokens) {
       const isOpponent = token.seat !== activeSeat && token.seat !== seatConfig.partnerSeat;
+      // Pion adverse au pieu : protégé contre le 5 adverse !
+      if (isOpponent && isTokenOnPieu(token, mode)) {
+        continue;
+      }
+
       const allowHomeEntry = !isOpponent;
       const { destination, valid } = calculateForwardDestination(
         token.location,
@@ -379,6 +419,12 @@ export function getLegalMovesForCard(
         const occupyingToken = destination.type === 'TRACK'
           ? findTokenAtLocation(destination, undefined, tokens)
           : undefined;
+
+        const isTargetOpponentOnPieu =
+          occupyingToken &&
+          occupyingToken.seat !== token.seat &&
+          isTokenOnPieu(occupyingToken, mode);
+        if (isTargetOpponentOnPieu) continue;
 
         const isMine = token.seat === activeSeat;
         moves.push({
@@ -421,6 +467,13 @@ export function getLegalMovesForCard(
         const occupyingToken = destination.type === 'TRACK'
           ? findTokenAtLocation(destination, undefined, tokens)
           : undefined;
+
+        const isOpponentOnPieu =
+          occupyingToken &&
+          occupyingToken.seat !== activeSeat &&
+          occupyingToken.seat !== seatConfig.partnerSeat &&
+          isTokenOnPieu(occupyingToken, mode);
+        if (isOpponentOnPieu) continue;
 
         moves.push({
           type: 'FORWARD',

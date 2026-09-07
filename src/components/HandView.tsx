@@ -256,6 +256,9 @@ export const HandView: React.FC<HandViewProps> = ({
           const isSelected = card.id === selectedCardId;
           const moves = isMyTurn ? getLegalMovesForCard(card, activeSeat, mode, tokens, split7Remaining) : [];
           const hasMoves = moves.length > 0;
+          const uniquePlayableTokens = Array.from(new Set(moves.map(m => m.tokenId)));
+          const canQuickPlayOnDoubleTap =
+            isSelected && isMyTurn && (uniquePlayableTokens.length === 1 || Boolean(selectedTokenId));
 
           return (
             <div
@@ -276,6 +279,13 @@ export const HandView: React.FC<HandViewProps> = ({
                 }
               }}
             >
+              {/* Double-tap quick play indicator on raised card */}
+              {canQuickPlayOnDoubleTap && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-emerald-400 text-slate-950 font-black text-[9px] sm:text-[10px] whitespace-nowrap shadow-lg shadow-emerald-500/50 border border-emerald-200 animate-bounce z-30">
+                  ▶ Re-clic pour jouer
+                </div>
+              )}
+
               {/* Header (Rank & Suit) */}
               <div className="flex items-center justify-between">
                 <span
@@ -361,9 +371,13 @@ export const HandView: React.FC<HandViewProps> = ({
                   </button>
                 ))}
             </div>
+          ) : Array.from(new Set(validMovesForSelectedCard.map(m => m.tokenId))).length === 1 ? (
+            <span>
+              Carte <strong>{selectedCard.rank}{selectedCard.symbol}</strong> : <strong>Touchez à nouveau la carte relevée</strong> ou le pion pour jouer !
+            </span>
           ) : (
             <span>
-              Carte <strong>{selectedCard.rank}{selectedCard.symbol}</strong> : Cliquez directement sur votre pion pour le déplacer !
+              Carte <strong>{selectedCard.rank}{selectedCard.symbol}</strong> : Touchez le pion que vous souhaitez déplacer.
             </span>
           )}
         </div>
