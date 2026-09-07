@@ -687,6 +687,30 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
           const width = maxX - minX;
           const height = maxY - minY;
 
+          const isNorth = minY < 200;
+          const isSouth = maxY > 750;
+          const isWest = minX < 200;
+          const isEast = maxX > 750;
+
+          let badgeX = minX + width / 2;
+          let badgeY = maxY + 18;
+
+          if (isNorth) {
+            badgeX = minX + width / 2;
+            badgeY = maxY + 18;
+          } else if (isSouth) {
+            badgeX = minX + width / 2;
+            badgeY = minY - 18;
+          } else if (isWest) {
+            badgeX = maxX + 18;
+            badgeY = minY + height / 2;
+          } else if (isEast) {
+            badgeX = minX - 18;
+            badgeY = minY + height / 2;
+          }
+
+          const titleY = isSouth ? maxY + 20 : minY - 10;
+
           return (
             <g key={`base-pod-${seat.id}`}>
               {/* Pulsing active halo behind the pod */}
@@ -698,14 +722,14 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                   height={height + 8}
                   rx="26"
                   fill="none"
-                  stroke={colorStyles.stroke}
+                  stroke={isMyTurn ? '#34d399' : '#f59e0b'}
                   strokeWidth="3.5"
                   strokeDasharray="8 6"
-                  strokeOpacity="0.8"
+                  strokeOpacity="0.85"
                 >
                   <animate
                     attributeName="stroke-opacity"
-                    values="0.3;1;0.3"
+                    values="0.35;1;0.35"
                     dur="1.8s"
                     repeatCount="indefinite"
                   />
@@ -721,7 +745,7 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                 rx="22"
                 fill={isCurrentActive ? '#0c1322' : '#070b14'}
                 fillOpacity="0.95"
-                stroke={isCurrentActive ? colorStyles.stroke : '#1e293b'}
+                stroke={isCurrentActive ? (isMyTurn ? '#34d399' : '#f59e0b') : '#1e293b'}
                 strokeWidth={isCurrentActive ? 3 : 1.5}
                 strokeOpacity={isCurrentActive ? 1 : 0.6}
               />
@@ -729,7 +753,7 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
               {/* Pod Seat Title */}
               <text
                 x={minX + width / 2}
-                y={minY - 10}
+                y={titleY}
                 textAnchor="middle"
                 fill={colorStyles.stroke}
                 fontSize="11"
@@ -740,31 +764,84 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
                 RÉSERVE • {seat.name.toUpperCase()}
               </text>
 
-              {/* Active Player Floating Indicator Pill */}
+              {/* Active Player Floating Indicator Badge near Reserve */}
               {isCurrentActive && (
-                <g>
+                <g transform={`translate(${badgeX}, ${badgeY})`}>
+                  {/* Outer animated glow aura */}
                   <rect
-                    x={minX + width / 2 - 58}
-                    y={maxY + 8}
-                    width="116"
-                    height="19"
-                    rx="9.5"
-                    fill={colorStyles.stroke}
-                    fillOpacity="0.25"
-                    stroke={colorStyles.stroke}
+                    x={-108}
+                    y={-15}
+                    width={216}
+                    height={30}
+                    rx="15"
+                    fill="none"
+                    stroke={isMyTurn ? '#34d399' : '#f59e0b'}
+                    strokeWidth="2"
+                    strokeDasharray="6 4"
+                    opacity="0.85"
+                  >
+                    <animate
+                      attributeName="stroke-dashoffset"
+                      from="0"
+                      to="20"
+                      dur="2s"
+                      repeatCount="indefinite"
+                    />
+                  </rect>
+
+                  {/* Badge container panel */}
+                  <rect
+                    x={-106}
+                    y={-13}
+                    width={212}
+                    height={26}
+                    rx="13"
+                    fill={isMyTurn ? '#064e3b' : '#1e1b18'}
+                    stroke={isMyTurn ? '#10b981' : '#d97706'}
                     strokeWidth="1.5"
+                    filter={`drop-shadow(0 4px 10px ${isMyTurn ? 'rgba(16,185,129,0.5)' : 'rgba(217,119,6,0.4)'})`}
                   />
+
+                  {/* Mini circular countdown timer on left */}
+                  <g transform="translate(-86, 0)">
+                    <circle cx={0} cy={0} r="8.5" fill="#070a10" stroke="#334155" strokeWidth="2" />
+                    <circle
+                      cx={0}
+                      cy={0}
+                      r="8.5"
+                      fill="none"
+                      stroke={isMyTurn ? '#34d399' : '#fbbf24'}
+                      strokeWidth="2"
+                      strokeDasharray="53.4"
+                      strokeDashoffset={53.4 * (1 - Math.max(0, Math.min(30, turnTimeLeft ?? 30)) / 30)}
+                      strokeLinecap="round"
+                      transform="rotate(-90)"
+                    />
+                    <text
+                      x={0}
+                      y={3}
+                      textAnchor="middle"
+                      fill="#ffffff"
+                      fontSize="7.5"
+                      fontWeight="900"
+                      className="font-mono pointer-events-none"
+                    >
+                      {turnTimeLeft ?? 30}
+                    </text>
+                  </g>
+
+                  {/* Badge Text */}
                   <text
-                    x={minX + width / 2}
-                    y={maxY + 21.5}
+                    x={8}
+                    y={4}
                     textAnchor="middle"
                     fill="#ffffff"
-                    fontSize="9.5"
+                    fontSize="10.5"
                     fontWeight="900"
-                    letterSpacing="1.2"
-                    className="font-display uppercase"
+                    letterSpacing="0.8"
+                    className="font-display uppercase pointer-events-none drop-shadow-sm"
                   >
-                    ▶ TOUR ACTIF ◀
+                    {isMyTurn ? "★ C'EST VOTRE TOUR ★" : "🔒 TOUR DE L'ADVERSAIRE"}
                   </text>
                 </g>
               )}

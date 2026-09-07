@@ -2,7 +2,7 @@ import React from 'react';
 import type { Card, GameMode, MoveOption, Seat, SeatConfig, Token } from '../game/types';
 import type { PlayerRole } from '../multiplayer/types';
 import { getLegalMovesForCard, hasAnyLegalMove } from '../game/rules';
-import { Sparkles, Trash2, ArrowRightLeft, Split, AlertCircle, Lock } from 'lucide-react';
+import { Sparkles, Trash2, ArrowRightLeft, Split, AlertCircle } from 'lucide-react';
 
 interface HandViewProps {
   cards: Card[];
@@ -59,7 +59,7 @@ export const HandView: React.FC<HandViewProps> = ({
   validMovesForSelectedCard,
   localPlayerRole,
   isLocalGame,
-  turnTimeLeft = 30,
+  turnTimeLeft: _turnTimeLeft = 30,
   onSelectCard,
   onDiscardCard,
   onExecuteMove,
@@ -71,15 +71,6 @@ export const HandView: React.FC<HandViewProps> = ({
       currentSeatConfig?.humanPlayer === localPlayerRole &&
       (!displayedSeat || displayedSeat === activeSeat));
 
-  const timerColor =
-    turnTimeLeft <= 5
-      ? '#ef4444'
-      : turnTimeLeft <= 10
-      ? '#f59e0b'
-      : isMyTurn
-      ? '#10b981'
-      : currentSeatConfig?.hex || '#38bdf8';
-
   const anyMovePossible = React.useMemo(
     () => hasAnyLegalMove(cards, activeSeat, mode, tokens),
     [cards, activeSeat, mode, tokens]
@@ -89,106 +80,31 @@ export const HandView: React.FC<HandViewProps> = ({
 
   return (
     <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
-      {/* Current Turn & Status Banner - High Prominence */}
-      <div
-        className={`w-full flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4 px-3 sm:px-5 py-2 sm:py-3 rounded-xl sm:rounded-2xl border-2 mb-2 sm:mb-3 select-none transition-all ${
-          isMyTurn
-            ? 'border-emerald-400 bg-gradient-to-r from-emerald-950/95 via-slate-900/90 to-emerald-950/95 shadow-[0_0_25px_rgba(16,185,129,0.35)]'
-            : 'border-amber-500/50 bg-gradient-to-r from-slate-950/95 via-slate-900/90 to-slate-950/95 shadow-[0_0_15px_rgba(245,158,11,0.15)]'
-        }`}
-      >
-        <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
-          {/* WePlay-style Highlight Avatar & Circular Timer Ring */}
-          <div className="relative flex items-center justify-center shrink-0">
-            <svg className="w-12 h-12 sm:w-14 sm:h-14 -rotate-90" viewBox="0 0 56 56">
-              {/* Background Track */}
-              <circle
-                cx="28"
-                cy="28"
-                r="23"
-                fill="none"
-                stroke="#1e293b"
-                strokeWidth="4"
-              />
-              {/* Animated Progress Arc */}
-              <circle
-                cx="28"
-                cy="28"
-                r="23"
-                fill="none"
-                stroke={timerColor}
-                strokeWidth="4"
-                strokeDasharray="144.51"
-                strokeDashoffset={144.51 * (1 - Math.max(0, Math.min(30, turnTimeLeft)) / 30)}
-                strokeLinecap="round"
-                className="transition-all duration-1000 ease-linear"
-              />
-            </svg>
-
-            {/* Glowing Avatar Spotlight */}
-            <div
-              className={`absolute w-8.5 h-8.5 sm:w-9.5 sm:h-9.5 rounded-full flex flex-col items-center justify-center font-black transition-all ${
-                isMyTurn
-                  ? 'shadow-[0_0_20px_rgba(16,185,129,0.8)] ring-2 ring-emerald-300'
-                  : 'shadow-md ring-1 ring-slate-600'
-              }`}
-              style={{
-                backgroundColor: currentSeatConfig?.hex || '#38bdf8',
-                color: '#07090e',
-              }}
-            >
-              <span className="text-[10px] sm:text-[11px] font-black leading-none">
-                J{currentSeatConfig?.humanPlayer || '1'}
-              </span>
-              <span className="text-[8px] sm:text-[9px] font-mono font-black leading-none mt-0.5">
-                {turnTimeLeft}s
-              </span>
-            </div>
-          </div>
-
-          <div className="flex-1">
-            {isMyTurn ? (
-              <span className="text-xs sm:text-sm md:text-base font-black text-emerald-300 tracking-wide uppercase flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
-                C'EST VOTRE TOUR DE JOUER !
-              </span>
-            ) : (
-              <span className="text-xs sm:text-sm md:text-base font-black text-amber-300 tracking-wide uppercase flex items-center gap-1.5">
-                <Lock className="w-4 h-4 text-amber-400 shrink-0" />
-                Tour de l'adversaire
-              </span>
-            )}
-          </div>
+      {/* Contextual Action Alerts (Partage du 7, Échange Valet, Défausse obligatoire) */}
+      {isMyTurn && selectedCard?.rank === '7' && split7Remaining < 7 && (
+        <div className="mb-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-xs font-semibold">
+          <Split className="w-3.5 h-3.5" />
+          <span>Partage du 7 : <strong>{split7Remaining}</strong> case(s) restante(s)</span>
         </div>
+      )}
 
-        {/* Action Prompt / Helper */}
-        <div className="flex items-center gap-2 text-xs w-full sm:w-auto justify-end">
-          {isMyTurn && selectedCard?.rank === '7' && split7Remaining < 7 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/20 border border-indigo-500/40 text-indigo-300">
-              <Split className="w-3.5 h-3.5" />
-              <span>Partage du 7 : <strong>{split7Remaining}</strong> case(s) restante(s)</span>
-            </div>
-          )}
-
-          {isMyTurn && selectedCard?.rank === 'J' && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300">
-              <ArrowRightLeft className="w-3.5 h-3.5" />
-              <span>
-                {jackFirstSelectedTokenId
-                  ? 'Étape 2 : Cliquez sur un autre pion de la piste à échanger'
-                  : 'Étape 1 : Cliquez sur votre pion de piste'}
-              </span>
-            </div>
-          )}
-
-          {isMyTurn && !anyMovePossible && cards.length > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/20 border border-rose-500/40 text-rose-300 font-semibold animate-pulse">
-              <AlertCircle className="w-3.5 h-3.5" />
-              <span>Aucun coup valide ! Défaussez une carte.</span>
-            </div>
-          )}
+      {isMyTurn && selectedCard?.rank === 'J' && (
+        <div className="mb-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-semibold">
+          <ArrowRightLeft className="w-3.5 h-3.5" />
+          <span>
+            {jackFirstSelectedTokenId
+              ? 'Étape 2 : Cliquez sur un autre pion de la piste à échanger'
+              : 'Étape 1 : Cliquez sur votre pion de piste'}
+          </span>
         </div>
-      </div>
+      )}
+
+      {isMyTurn && !anyMovePossible && cards.length > 0 && (
+        <div className="mb-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-semibold animate-pulse">
+          <AlertCircle className="w-3.5 h-3.5" />
+          <span>Aucun coup valide ! Défaussez une carte.</span>
+        </div>
+      )}
 
       {/* Cards Row Header */}
       <div className="w-full flex items-center justify-between px-2 mb-1 select-none">
