@@ -45,6 +45,13 @@ export function createInitialState(): GameState {
   };
 }
 
+export function getCardsPerSeatForRound(mode: GameMode, roundNumber: number): number {
+  if (mode === 'PURE_DUEL') return 6;
+  // Classic Jackaroo: cycle de 4, 4, puis 5 cartes par joueur
+  const cycleIndex = (roundNumber - 1) % 3;
+  return cycleIndex === 2 ? 5 : 4;
+}
+
 export function startNewGame(mode: GameMode): GameState {
   const seats = getSeatConfigs(mode);
   const tokens = createInitialTokens(mode);
@@ -59,7 +66,7 @@ export function startNewGame(mode: GameMode): GameState {
     WEST: [],
   };
 
-  const cardsPerSeat = mode === 'PURE_DUEL' ? 6 : 5;
+  const cardsPerSeat = getCardsPerSeatForRound(mode, 1);
 
   for (const seat of seats) {
     hands[seat.id] = deck.slice(0, cardsPerSeat);
@@ -128,7 +135,9 @@ export function dealNextRound(state: GameState): GameState {
   if (!state.mode) return state;
 
   const seats = state.seats;
-  const cardsNeeded = (state.mode === 'PURE_DUEL' ? 6 : 5) * seats.length;
+  const newRoundNumber = state.roundNumber + 1;
+  const cardsPerSeat = getCardsPerSeatForRound(state.mode, newRoundNumber);
+  const cardsNeeded = cardsPerSeat * seats.length;
 
   let deck = [...state.deck];
   let discardPile = [...state.discardPile];
@@ -139,7 +148,6 @@ export function dealNextRound(state: GameState): GameState {
     discardPile = [];
   }
 
-  const cardsPerSeat = state.mode === 'PURE_DUEL' ? 6 : 5;
   const newHands = { ...state.hands };
 
   for (const seat of seats) {
@@ -148,7 +156,6 @@ export function dealNextRound(state: GameState): GameState {
   }
 
   const nextPhase = state.mode === 'PURE_DUEL' ? 'PLAYING' : 'CARD_SWAP';
-  const newRoundNumber = state.roundNumber + 1;
 
   return {
     ...state,

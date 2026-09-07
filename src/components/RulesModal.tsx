@@ -33,15 +33,15 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
           {/* Card Powers Reference */}
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-3 flex items-center gap-1.5">
-              <Zap className="w-4 h-4" /> Valeurs & Pouvoirs Spéciaux des Cartes
+              <Zap className="w-4 h-4" /> Règles & Pouvoirs des Cartes (Style WePlay Jackaroo)
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-1">
                 <div className="flex items-center justify-between">
                   <span className="font-extrabold text-white text-base">As (A)</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Sortie ou +1</span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Sortie, +1 ou +11</span>
                 </div>
-                <p className="text-xs text-slate-400">Sortir un pion de sa Base vers la case Départ, ou avancer un pion actif de 1 case.</p>
+                <p className="text-xs text-slate-400">Sortir un pion de sa Base vers la case Départ, OU avancer un pion de 1 case, OU de 11 cases.</p>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-1">
@@ -49,7 +49,15 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
                   <span className="font-extrabold text-white text-base">Roi (K)</span>
                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Sortie ou +13</span>
                 </div>
-                <p className="text-xs text-slate-400">Sortir un pion de sa Base vers la case Départ, ou avancer un pion actif de 13 cases.</p>
+                <p className="text-xs text-slate-400">Sortir un pion de sa Base vers la case Départ, OU avancer un pion de 13 cases.</p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-white text-base">Dame (Q - 12)</span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">Avancer de 12</span>
+                </div>
+                <p className="text-xs text-slate-400">Avancer un pion en jeu de 12 cases sur la piste. Si vous dépassez l'entrée de la maison, le pion poursuit son tour de piste (ne permet pas de sortir de la base).</p>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-1">
@@ -57,7 +65,15 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
                   <span className="font-extrabold text-white text-base">Valet (J)</span>
                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">Échange</span>
                 </div>
-                <p className="text-xs text-slate-400">Échanger les positions de n'importe quels 2 pions situés sur la piste (les pions en Base ou en Maison sont protégés).</p>
+                <p className="text-xs text-slate-400">Échanger l'un de vos pions avec un pion adverse sur la piste (les pions en Base ou en Maison sont protégés).</p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-extrabold text-white text-base">Cinq (5)</span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">N'importe quel pion</span>
+                </div>
+                <p className="text-xs text-slate-400">Avancer <strong>n'importe quel pion sur la piste</strong> de 5 cases : le vôtre, celui de votre allié ou même un pion ennemi !</p>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-1">
@@ -65,7 +81,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
                   <span className="font-extrabold text-white text-base">Quatre (4)</span>
                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">Recul de 4</span>
                 </div>
-                <p className="text-xs text-slate-400">Doit obligatoirement reculer de 4 cases sur la piste. Idéal pour se positionner juste avant la Maison.</p>
+                <p className="text-xs text-slate-400">Doit obligatoirement reculer de 4 cases sur la piste. Joué depuis la case départ, il vous positionne juste devant l'entrée de votre Maison !</p>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-1">
@@ -73,21 +89,13 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
                   <span className="font-extrabold text-white text-base">Sept (7)</span>
                   <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Partage 7</span>
                 </div>
-                <p className="text-xs text-slate-400">Partager un total de 7 cases entre plusieurs pions de votre camp (ex : 3 sur l'un, 4 sur un autre).</p>
+                <p className="text-xs text-slate-400">Avancer de 7 cases ou partager les 7 cases entre deux pions de votre camp (ex : 3 et 4).</p>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-1">
                 <div className="flex items-center justify-between">
-                  <span className="font-extrabold text-white text-base">Dame (Q)</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-700/50 text-slate-300">Avancer de 12</span>
-                </div>
-                <p className="text-xs text-slate-400">Avancer de 12 cases sur la piste ou vers la Maison.</p>
-              </div>
-
-              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col gap-1 sm:col-span-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-extrabold text-white text-base">Cartes Numériques (2, 3, 5, 6, 8, 9, 10)</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-700/50 text-slate-300">Valeur Nominale</span>
+                  <span className="font-extrabold text-white text-base">Cartes (2, 3, 6, 8, 9, 10)</span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-700/50 text-slate-300">Avance Normale</span>
                 </div>
                 <p className="text-xs text-slate-400">Avancer exactement du nombre de cases indiqué par la carte.</p>
               </div>
@@ -97,20 +105,21 @@ export const RulesModal: React.FC<RulesModalProps> = ({ isOpen, onClose }) => {
           {/* Collisions & Captures */}
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 mb-2 flex items-center gap-1.5">
-              <AlertTriangle className="w-4 h-4" /> Collisions & Captures
+              <AlertTriangle className="w-4 h-4" /> Collisions & Sorties de Base ("Au Pieu")
             </h3>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Atterrir sur une case occupée capture le pion présent et le renvoie immédiatement dans sa Base de départ.
+              Pour sortir un pion de sa Base de réserve, vous devez <strong>impérativement jouer un As ou un Roi</strong>. Une Dame (12) ou toute autre carte ne permet pas de sortir un pion en base.
+              Atterrir sur une case occupée capture le pion présent et le renvoie immédiatement dans sa Base.
             </p>
           </div>
 
           {/* Maison & Victoire */}
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2 flex items-center gap-1.5">
-              <Shield className="w-4 h-4" /> Entrée en Maison & Victoire
+              <Shield className="w-4 h-4" /> Entrée en Maison (Safe Zone) & Dépassement
             </h3>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Les pions entrent dans la Maison depuis la case d'entrée avec un compte exact. À l'intérieur de la Maison, les pions ne peuvent pas se sauter par-dessus et sont immunisés contre les captures et les échanges de Valet.
+              Les pions entrent dans la Maison avec un <strong>compte exact</strong>. Si votre carte dépasse les cases restantes de la maison (par exemple jouer un 12 en arrivant près de l'entrée), le pion ne rentre pas mais continue naturellement son tour sur la piste !
             </p>
           </div>
 

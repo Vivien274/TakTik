@@ -189,21 +189,25 @@ export function calculateForwardDestination(
   let remainingSteps = steps;
 
   while (remainingSteps > 0) {
-    // If currently at the pre-home node and moving forward, turn into HOME
+    // If currently at the pre-home node and moving forward:
+    // In Jackaroo rules, if remainingSteps fits into HOME (slots 0..3), enter HOME!
     if (currentIndex === seatConfig.homePreIndex) {
       const homeSlotTarget = remainingSteps - 1;
-      if (homeSlotTarget > 3) {
-        // Over-shooting home is not allowed
-        return { destination: startLocation, valid: false };
-      }
-      // Check no token jumps or blocks inside HOME
-      for (let s = 0; s <= homeSlotTarget; s++) {
-        const occupied = findTokenAtLocation({ type: 'HOME', index: s }, tokenSeat, tokens);
-        if (occupied && (s === homeSlotTarget || s < homeSlotTarget)) {
-          return { destination: startLocation, valid: false };
+      if (homeSlotTarget >= 0 && homeSlotTarget <= 3) {
+        let blockedInHome = false;
+        for (let s = 0; s <= homeSlotTarget; s++) {
+          const occupied = findTokenAtLocation({ type: 'HOME', index: s }, tokenSeat, tokens);
+          if (occupied) {
+            blockedInHome = true;
+            break;
+          }
+        }
+        if (!blockedInHome) {
+          return { destination: { type: 'HOME', index: homeSlotTarget }, valid: true };
         }
       }
-      return { destination: { type: 'HOME', index: homeSlotTarget }, valid: true };
+      // If homeSlotTarget > 3 (overshoot) or path into Home is blocked:
+      // The marble does not enter HOME; it continues along the track!
     }
 
     currentIndex = (currentIndex + 1) % totalTrackNodes;
@@ -350,35 +354,76 @@ export function getLegalMovesForCard(
     return moves;
   }
 
-  // Check 5: Standard forward moves (2, 3, 5, 6, 8, 9, 10, Q=12, K=13, A=1)
+  // Check 5: Standard forward moves
+  // Special WePlay Rule for Card 5: can move ANY token on the track (friendly, partner, or opponent)!
+  if (card.rank === '5') {
+    const allTrackTokens = Object.values(tokens).filter(t => t.location.type === 'TRACK');
+    for (const token of allTrackTokens) {
+      const { destination, valid } = calculateForwardDestination(
+        token.location,
+        5,
+        token.seat,
+        mode,
+        tokens
+      );
+      if (valid) {
+        const occupyingToken = destination.type === 'TRACK'
+          ? findTokenAtLocation(destination, undefined, tokens)
+          : undefined;
+
+        const isMine = token.seat === activeSeat;
+        moves.push({
+          type: 'FORWARD',
+          cardId: card.id,
+          tokenId: token.id,
+          from: token.location,
+          to: destination,
+          steps: 5,
+          capturedTokenId: occupyingToken?.id,
+          description: destination.type === 'HOME'
+            ? `Entrer dans la Maison (${token.seat}) case ${destination.index + 1}`
+            : isMine
+            ? `Avancer de 5 vers case ${destination.index + 1}${occupyingToken ? ` (Capture !)` : ''}`
+            : `Avancer pion ${token.seat} de 5 vers case ${destination.index + 1}`,
+        });
+      }
+    }
+    return moves;
+  }
+
+  // Normal forward moves for friendly eligible tokens (2, 3, 6, 8, 9, 10, Q=12, K=13, A=1 or 11)
   const forwardTokens = eligibleTokens.filter(t => t.location.type !== 'BASE');
-  const steps = card.rank === 'K' ? 13 : card.rank === 'Q' ? 12 : card.value;
+  const stepOptions = card.rank === 'A'
+    ? [1, 11]
+    : [card.rank === 'K' ? 13 : card.rank === 'Q' ? 12 : card.value];
 
-  for (const token of forwardTokens) {
-    const { destination, valid } = calculateForwardDestination(
-      token.location,
-      steps,
-      token.seat,
-      mode,
-      tokens
-    );
-    if (valid) {
-      const occupyingToken = destination.type === 'TRACK'
-        ? findTokenAtLocation(destination, undefined, tokens)
-        : undefined;
-
-      moves.push({
-        type: 'FORWARD',
-        cardId: card.id,
-        tokenId: token.id,
-        from: token.location,
-        to: destination,
+  for (const steps of stepOptions) {
+    for (const token of forwardTokens) {
+      const { destination, valid } = calculateForwardDestination(
+        token.location,
         steps,
-        capturedTokenId: occupyingToken?.id,
-        description: destination.type === 'HOME'
-          ? `Entrer dans la Maison (case ${destination.index + 1})`
-          : `Avancer de +${steps} vers case ${destination.index + 1}${occupyingToken ? ` (Capture !)` : ''}`,
-      });
+        token.seat,
+        mode,
+        tokens
+      );
+      if (valid) {
+        const occupyingToken = destination.type === 'TRACK'
+          ? findTokenAtLocation(destination, undefined, tokens)
+          : undefined;
+
+        moves.push({
+          type: 'FORWARD',
+          cardId: card.id,
+          tokenId: token.id,
+          from: token.location,
+          to: destination,
+          steps,
+          capturedTokenId: occupyingToken?.id,
+          description: destination.type === 'HOME'
+            ? `Entrer dans la Maison (case ${destination.index + 1})`
+            : `Avancer de +${steps} vers case ${destination.index + 1}${occupyingToken ? ` (Capture !)` : ''}`,
+        });
+      }
     }
   }
 

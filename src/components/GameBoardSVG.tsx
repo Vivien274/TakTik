@@ -25,6 +25,7 @@ interface GameBoardSVGProps {
   jackFirstSelectedTokenId?: string | null;
   onSelectJackTarget?: (targetTokenId: string) => void;
   isMyTurn?: boolean;
+  onInvalidTokenClick?: (token: Token) => void;
 }
 
 const COLOR_MAP: Record<string, { fill: string; stroke: string; glow: string; text: string }> = {
@@ -66,6 +67,7 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
   jackFirstSelectedTokenId,
   onSelectJackTarget,
   isMyTurn = true,
+  onInvalidTokenClick,
 }) => {
   const geometry: BoardGeometryConfig = React.useMemo(
     () => getBoardGeometry(mode),
@@ -471,18 +473,23 @@ export const GameBoardSVG: React.FC<GameBoardSVGProps> = ({
             token.location.type === 'TRACK' &&
             token.id !== jackFirstSelectedTokenId;
 
-          const isClickable = isMyTurn && (hasAvailableMoves || isJackTargetSelectable);
-
           return (
             <g
               key={`token-${token.id}`}
-              className={isClickable ? 'cursor-pointer transition-transform' : ''}
+              className={isMyTurn ? 'cursor-pointer transition-transform' : ''}
               onClick={() => {
                 if (!isMyTurn) return;
                 if (isJackTargetSelectable && onSelectJackTarget) {
                   onSelectJackTarget(token.id);
                 } else if (hasAvailableMoves) {
-                  onSelectToken(token.id);
+                  const tokenMoves = movesByTokenId.get(token.id) || [];
+                  if (tokenMoves.length === 1) {
+                    onExecuteMove(tokenMoves[0]);
+                  } else {
+                    onSelectToken(token.id);
+                  }
+                } else if (onInvalidTokenClick) {
+                  onInvalidTokenClick(token);
                 }
               }}
             >

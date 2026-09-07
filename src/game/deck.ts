@@ -15,19 +15,19 @@ export const SUIT_SYMBOLS: Record<Suit, string> = {
 export function getCardDescription(rank: Rank): { value: number; description: string } {
   switch (rank) {
     case 'A':
-      return { value: 1, description: 'Sortir de la Base ou Avancer de +1' };
+      return { value: 1, description: 'Sortir de la Base, ou Avancer de +1 ou +11' };
     case '2':
       return { value: 2, description: 'Avancer de +2' };
     case '3':
       return { value: 3, description: 'Avancer de +3' };
     case '4':
-      return { value: -4, description: 'Reculer de 4 cases' };
+      return { value: -4, description: 'Reculer obligatoirement de 4 cases' };
     case '5':
-      return { value: 5, description: 'Avancer de +5' };
+      return { value: 5, description: 'Avancer n’importe quel pion de 5 cases' };
     case '6':
       return { value: 6, description: 'Avancer de +6' };
     case '7':
-      return { value: 7, description: 'Partager 7 cases entre vos pions' };
+      return { value: 7, description: 'Avancer de 7 (ou partager entre 2 pions)' };
     case '8':
       return { value: 8, description: 'Avancer de +8' };
     case '9':
@@ -35,11 +35,11 @@ export function getCardDescription(rank: Rank): { value: number; description: st
     case '10':
       return { value: 10, description: 'Avancer de +10' };
     case 'J':
-      return { value: 0, description: 'Échanger 2 pions sur la piste' };
+      return { value: 0, description: 'Échanger un de vos pions avec un pion adverse' };
     case 'Q':
       return { value: 12, description: 'Avancer de +12' };
     case 'K':
-      return { value: 13, description: 'Sortir de la Base ou Avancer de +13' };
+      return { value: 13, description: 'Sortir de la Base, ou Avancer de +13' };
   }
 }
 

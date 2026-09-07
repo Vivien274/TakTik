@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { GameMode, GameState, MoveOption, Seat } from './game/types';
+import type { GameMode, GameState, MoveOption, Seat, Token } from './game/types';
 import type { ConnectionStatus, PlayerRole, SyncMessage } from './multiplayer/types';
 import {
   applyMove,
@@ -18,6 +18,7 @@ import { CardSwapModal } from './components/CardSwapModal';
 import { RulesModal } from './components/RulesModal';
 import { HistoryDrawer } from './components/HistoryDrawer';
 import { VictoryModal } from './components/VictoryModal';
+import { Info } from 'lucide-react';
 
 export function App() {
   const [gameState, setGameState] = useState<GameState>(createInitialState());
@@ -33,6 +34,13 @@ export function App() {
   const [selectedLobbyMode, setSelectedLobbyMode] = useState<GameMode | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hintMessage, setHintMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!hintMessage) return;
+    const timer = setTimeout(() => setHintMessage(null), 4000);
+    return () => clearTimeout(timer);
+  }, [hintMessage]);
 
   // Références mutables pour éviter les fermetures lexicales périmées (stale closures)
   const clientRef = useRef<RealtimeSyncClient | null>(null);
@@ -338,6 +346,22 @@ export function App() {
     }));
   };
 
+  // Clic sur un pion qui ne peut pas être déplacé : explication immédiate à l'utilisateur
+  const handleInvalidTokenClick = (token: Token) => {
+    if (!isMyTurn) return;
+    if (!selectedCard) {
+      setHintMessage("Sélectionnez d'abord une carte dans votre main.");
+      return;
+    }
+    if (token.location.type === 'BASE') {
+      setHintMessage("Ce pion est en base (au pieu). Seul un As ou un Roi permet de sortir un pion sur la case départ !");
+    } else if (token.location.type === 'HOME') {
+      setHintMessage("Ce pion est dans la maison d'arrivée. Il lui faut un compte exact (1, 2 ou 3) pour avancer.");
+    } else {
+      setHintMessage(`La carte ${selectedCard.rank}${selectedCard.symbol} ne permet pas de déplacer ce pion.`);
+    }
+  };
+
   // Sélection de la cible pour le Valet
   const handleSelectJackTarget = (targetTokenId: string) => {
     if (!isMyTurn || !gameState.jackFirstSelectedTokenId || !selectedCard) return;
@@ -464,6 +488,20 @@ export function App() {
 
       {/* Arène de jeu principale */}
       <main className="flex-1 flex flex-col items-center justify-between p-2 sm:p-4 max-w-7xl w-full mx-auto relative">
+        {/* Bulle d'aide / Toast d'information des règles */}
+        {hintMessage && (
+          <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-slate-900/95 border border-cyan-500/60 text-cyan-200 text-xs font-medium shadow-2xl shadow-cyan-950/70 flex items-center gap-2.5 animate-in fade-in slide-in-from-top-2 duration-200 backdrop-blur-md">
+            <Info className="w-4 h-4 text-cyan-400 shrink-0 animate-pulse" />
+            <span>{hintMessage}</span>
+            <button
+              onClick={() => setHintMessage(null)}
+              className="ml-2 text-slate-400 hover:text-white text-xs font-bold"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* Plateau dynamique SVG */}
         <div className="w-full flex-1 flex items-center justify-center my-1 sm:my-2">
           <GameBoardSVG
@@ -478,6 +516,7 @@ export function App() {
             jackFirstSelectedTokenId={gameState.jackFirstSelectedTokenId}
             onSelectJackTarget={handleSelectJackTarget}
             isMyTurn={isMyTurn}
+            onInvalidTokenClick={handleInvalidTokenClick}
           />
         </div>
 
